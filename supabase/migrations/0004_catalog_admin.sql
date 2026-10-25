@@ -57,21 +57,20 @@ create policy settings_write on public.app_settings for all to authenticated
   using (public.has_perm('settings_edit') and key <> 'owner_email') with check (public.has_perm('settings_edit') and key <> 'owner_email');
 
 -- a category / size that products still use cannot be deleted
-create or replace function public.delete_category(p_slug text) returns void
+create or replace function public.guard_category_in_use() returns trigger
 language plpgsql security definer set search_path = public as $$
 begin
-  if not public.has_perm('categories_edit') then raise exception 'FORBIDDEN'; end if;
-  if exists (select 1 from products where category = p_slug) then raise exception 'IN_USE'; end if;
-  delete from categories where slug = p_slug;
+  if exists (select 1 from products where category = old.slug) then raise exception 'IN_USE'; end if;
+  return old;
 end $$;
+create trigger categories_in_use before delete on public.categories
+  for each row execute function public.guard_category_in_use();
 
-create or replace function public.delete_size(p_code text) returns void
+create or replace function public.guard_size_in_use() returns trigger
 language plpgsql security definer set search_path = public as $$
 begin
-  if not public.has_perm('sizes_edit') then raise exception 'FORBIDDEN'; end if;
-  if exists (select 1 from product_variants where size = p_code) then raise exception 'IN_USE'; end if;
-  delete from size_options where code = p_code;
+  if exists (select 1 from product_variants where size = old.code) then raise exception 'IN_USE'; end if;
+  return old;
 end $$;
-
-grant execute on function public.delete_category(text) to authenticated;
-grant execute on function public.delete_size(text) to authenticated;
+create trigger sizes_in_use before delete on public.size_options
+  for each row execute function public.guard_size_in_use();
