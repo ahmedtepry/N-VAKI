@@ -7,6 +7,7 @@ import '../core/common.dart';
 import '../core/models.dart';
 import '../core/theme.dart';
 import '../widgets/garment.dart';
+import 'dash_import.dart';
 
 const palette = [
   ['أسود', 'Black', '#141414'],
@@ -73,7 +74,24 @@ class _CatalogTabState extends State<CatalogTab> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.end, children: [
+        if (App.i.can('catalog_edit'))
+          FloatingActionButton.small(
+            heroTag: 'import',
+            backgroundColor: C.card,
+            foregroundColor: C.ink,
+            elevation: 0,
+            shape: const CircleBorder(side: BorderSide(color: C.ink)),
+            tooltip: tr('استيراد من إكسيل', 'Import from Excel'),
+            onPressed: () async {
+              await Navigator.of(context).push(fadeRoute(const ImportScreen()));
+              _load();
+            },
+            child: const Icon(Icons.upload_file_rounded),
+          ),
+        const SizedBox(height: 10),
+        FloatingActionButton.extended(
+        heroTag: 'new',
         backgroundColor: C.neon,
         foregroundColor: C.onNeon,
         elevation: 0,
@@ -81,7 +99,8 @@ class _CatalogTabState extends State<CatalogTab> {
         onPressed: () => _open(null),
         icon: const Icon(Icons.add),
         label: Text(tr('منتج جديد', 'NEW PRODUCT'), style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
-      ),
+        ),
+      ]),
       body: error != null
           ? ErrorRetry(error!, _load)
           : items == null

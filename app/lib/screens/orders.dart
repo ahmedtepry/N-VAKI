@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../core/invoice.dart';
+import 'cart.dart' show askTransferRef;
 import '../core/api.dart';
 import '../core/app.dart';
 import '../core/common.dart';
@@ -145,6 +147,33 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       appBar: AppBar(title: Text('#${o['order_no']}')),
       body: ListView(padding: const EdgeInsets.fromLTRB(22, 4, 22, 28), children: [
         Row(children: [StatusChip(statusLabel(status), statusColor(status)), const Spacer(), Text(fmtDate(o['created_at']), style: const TextStyle(color: C.mute, fontSize: 11))]),
+        const SizedBox(height: 10),
+        Row(children: [
+          StatusChip(payLabel('${o['payment_method']}', '${o['payment_status']}'), payColor('${o['payment_method']}', '${o['payment_status']}')),
+        ]),
+        if (o['payment_method'] == 'wallet' && o['payment_status'] == 'unpaid' && status != 'cancelled') ...[
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(color: C.tint.withValues(alpha: 0.6), borderRadius: BorderRadius.circular(12), border: Border.all(color: C.line)),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(tr('حوّل ${money(toD(o['total']))} على المحفظة:', 'Transfer ${money(toD(o['total']))} to the wallet:'), style: const TextStyle(fontWeight: FontWeight.w700)),
+              const SizedBox(height: 4),
+              Text(App.i.walletNumber, textDirection: TextDirection.ltr, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
+              const SizedBox(height: 8),
+              NeonButton(tr('حوّلت المبلغ', 'I have transferred'), onPressed: () async {
+                final ref = await askTransferRef(context);
+                if (ref == null) return;
+                try {
+                  await Api.walletMarkSent(o['id'], ref: ref);
+                  await _load();
+                } catch (e) {
+                  toastError(e);
+                }
+              }),
+            ]),
+          ),
+        ],
         const SizedBox(height: 18),
         if (status != 'cancelled') ...[
           NeonButton(status == 'shipped' ? tr('تتبّع المندوب على الخريطة', 'Track the courier live') : tr('تتبّع الطلب', 'Track order'), icon: Icons.map_outlined, onPressed: () => Navigator.of(context).push(fadeRoute(TrackScreen(orderId: o['id'])))),
@@ -197,6 +226,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             ),
         ],
         const SizedBox(height: 26),
+        NeonButton(tr('فاتورة PDF', 'Invoice PDF'), icon: Icons.picture_as_pdf_outlined, outline: true, onPressed: () => shareInvoice(o, staff: false)),
+        const SizedBox(height: 10),
         NeonButton(tr('اسأل خدمة العملاء عن الطلب', 'Ask support about this order'), icon: Icons.chat_bubble_outline_rounded, outline: true, onPressed: () => Navigator.of(context).push(fadeRoute(ChatScreen(subject: '#${o['order_no']}', orderId: o['id'])))),
         if (status == 'new') ...[
           const SizedBox(height: 10),

@@ -30,7 +30,7 @@ ThemeData buildTheme(bool ar) {
     ),
     splashFactory: InkRipple.splashFactory,
   );
-  final text = (ar ? GoogleFonts.tajawalTextTheme(base.textTheme) : GoogleFonts.spaceGroteskTextTheme(base.textTheme))
+  final text = (ar ? GoogleFonts.tajawalTextTheme(base.textTheme) : GoogleFonts.poppinsTextTheme(base.textTheme))
       .apply(bodyColor: C.ink, displayColor: C.ink);
   return base.copyWith(
     textTheme: text,

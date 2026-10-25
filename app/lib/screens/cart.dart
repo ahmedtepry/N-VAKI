@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../core/api.dart';
 import '../core/app.dart';
 import '../core/common.dart';
@@ -111,6 +112,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   double discount = 0;
   String? appliedCode;
   LatLng? pin;
+  String payment = 'cod';
 
   double get shipNow {
     final a = App.i;
@@ -161,16 +163,38 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     if (!key.currentState!.validate()) return;
     setState(() => busy = true);
     try {
-      final id = await Api.placeOrder(name: name.text, phone: phone.text, address: address.text, city: city.text, notes: notes.text, coupon: appliedCode, lat: pin?.latitude, lng: pin?.longitude);
+      final id = await Api.placeOrder(name: name.text, phone: phone.text, address: address.text, city: city.text, notes: notes.text, coupon: appliedCode, lat: pin?.latitude, lng: pin?.longitude, payment: payment);
       final row = await App.i.db.from('orders').select('order_no, total').eq('id', id).single();
       App.i.clearCart();
       if (!mounted) return;
-      Navigator.of(context).pushAndRemoveUntil(fadeRoute(OrderPlacedScreen(orderId: id, orderNo: '${row['order_no']}', total: toD(row['total']))), (r) => r.isFirst);
+      Navigator.of(context).pushAndRemoveUntil(fadeRoute(OrderPlacedScreen(orderId: id, orderNo: '${row['order_no']}', total: toD(row['total']), wallet: payment == 'wallet')), (r) => r.isFirst);
     } catch (e) {
       toastError(e);
     } finally {
       if (mounted) setState(() => busy = false);
     }
+  }
+
+  Widget _payOption(String v, IconData icon, String title, String sub) {
+    final on = payment == v;
+    return InkWell(
+      onTap: () => setState(() => payment = v),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(color: on ? C.tint.withValues(alpha: 0.6) : Colors.transparent, border: Border.all(color: on ? C.ink : C.line, width: on ? 1.5 : 1), borderRadius: BorderRadius.circular(12)),
+        child: Row(children: [
+          Icon(icon, color: on ? C.neon : C.mute),
+          const SizedBox(width: 12),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
+            const SizedBox(height: 2),
+            Text(sub, style: const TextStyle(color: C.mute, fontSize: 12, height: 1.3)),
+          ])),
+          Icon(on ? Icons.radio_button_checked : Icons.radio_button_off, color: on ? C.neon : C.line),
+        ]),
+      ),
+    );
   }
 
   @override
@@ -216,16 +240,35 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ]),
             if (discount > 0) Padding(padding: const EdgeInsets.only(top: 8), child: Text(tr('الخصم: -${money(discount)}', 'Discount: -${money(discount)}'), style: const TextStyle(color: C.ok, fontWeight: FontWeight.w800))),
             const SizedBox(height: 22),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(border: Border.all(color: C.ink), borderRadius: BorderRadius.circular(12)),
-              child: Row(children: [
-                const Icon(Icons.payments_outlined),
-                const SizedBox(width: 10),
-                Expanded(child: Text(tr('الدفع عند الاستلام', 'Cash on delivery'), style: const TextStyle(fontWeight: FontWeight.w800))),
-                Text(money(totalNow), style: const TextStyle(fontWeight: FontWeight.w900)),
-              ]),
-            ),
+            Text(tr('طريقة الدفع', 'PAYMENT'), style: const TextStyle(fontSize: 11, color: C.mute, letterSpacing: 1.4, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 8),
+            _payOption('cod', Icons.payments_outlined, tr('الدفع عند الاستلام', 'Cash on delivery'), tr('تدفع للمندوب لما الطلب يوصلك', 'Pay the courier when it arrives')),
+            const SizedBox(height: 10),
+            _payOption('wallet', Icons.account_balance_wallet_outlined, tr('محفظة إلكترونية', 'E-wallet'), tr('حوّل المبلغ على رقم المحفظة وفريقنا يأكد الدفع', 'Transfer to our wallet number; the team confirms it')),
+            if (payment == 'wallet')
+              Container(
+                margin: const EdgeInsets.only(top: 10),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(color: C.tint.withValues(alpha: 0.6), borderRadius: BorderRadius.circular(12), border: Border.all(color: C.line)),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(tr('بعد تأكيد الطلب حوّل ${money(totalNow)} على الرقم:', 'After placing the order, transfer ${money(totalNow)} to:'), style: const TextStyle(height: 1.4, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 6),
+                  Row(children: [
+                    Expanded(child: Text(a.walletNumber, textDirection: TextDirection.ltr, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: 1.2))),
+                    IconButton(onPressed: () {
+                      Clipboard.setData(ClipboardData(text: a.walletNumber));
+                      toast(tr('اتنسخ الرقم', 'Number copied'));
+                    }, icon: const Icon(Icons.copy_rounded, size: 20)),
+                  ]),
+                  Text(tr('فريقنا هيوصله إشعار بطلبك فورًا.', 'Our team is notified of your order right away.'), style: const TextStyle(color: C.mute, fontSize: 12)),
+                ]),
+              ),
+            const SizedBox(height: 14),
+            Row(children: [
+              Text(tr('الإجمالي', 'Total'), style: const TextStyle(fontWeight: FontWeight.w800)),
+              const Spacer(),
+              Text(money(totalNow), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
+            ]),
             const SizedBox(height: 22),
             NeonButton(tr('تأكيد الطلب', 'Place order'), onPressed: _place, loading: busy),
           ]),
@@ -235,10 +278,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 }
 
-class OrderPlacedScreen extends StatelessWidget {
+class OrderPlacedScreen extends StatefulWidget {
   final String orderId, orderNo;
   final double total;
-  const OrderPlacedScreen({required this.orderId, required this.orderNo, required this.total});
+  final bool wallet;
+  const OrderPlacedScreen({required this.orderId, required this.orderNo, required this.total, this.wallet = false});
+  @override
+  State<OrderPlacedScreen> createState() => _OrderPlacedScreenState();
+}
+
+class _OrderPlacedScreenState extends State<OrderPlacedScreen> {
+  String get orderId => widget.orderId;
+  String get orderNo => widget.orderNo;
+  double get total => widget.total;
+  bool sent = false;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -256,6 +309,35 @@ class OrderPlacedScreen extends StatelessWidget {
               Text(money(total), style: const TextStyle(color: C.mute)),
               const SizedBox(height: 14),
               Text(tr('فريقنا هيراجع الطلب ويأكده معاك. هتوصلك إشعارات بكل تحديث.', 'Our team will review and confirm it. You will get a notification on every update.'), textAlign: TextAlign.center, style: const TextStyle(color: C.mute, height: 1.5)),
+              if (widget.wallet) ...[
+                const SizedBox(height: 18),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(color: C.tint.withValues(alpha: 0.6), borderRadius: BorderRadius.circular(12), border: Border.all(color: C.line)),
+                  child: Column(children: [
+                    Text(tr('حوّل ${money(total)} على المحفظة:', 'Transfer ${money(total)} to the wallet:'), style: const TextStyle(fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 4),
+                    Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      Text(App.i.walletNumber, textDirection: TextDirection.ltr, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
+                      IconButton(onPressed: () {
+                        Clipboard.setData(ClipboardData(text: App.i.walletNumber));
+                        toast(tr('اتنسخ الرقم', 'Number copied'));
+                      }, icon: const Icon(Icons.copy_rounded, size: 20)),
+                    ]),
+                    const SizedBox(height: 6),
+                    NeonButton(sent ? tr('اتبلّغ الفريق ✓', 'Team notified ✓') : tr('حوّلت المبلغ', 'I have transferred'), onPressed: sent ? null : () async {
+                      final ref = await askTransferRef(context);
+                      if (ref == null) return;
+                      try {
+                        await Api.walletMarkSent(orderId, ref: ref);
+                        if (mounted) setState(() => sent = true);
+                      } catch (e) {
+                        toastError(e);
+                      }
+                    }),
+                  ]),
+                ),
+              ],
               const SizedBox(height: 28),
               NeonButton(tr('تابع طلباتي', 'Track my orders'), onPressed: () => Navigator.of(context).pushReplacement(fadeRoute(const OrdersScreen()))),
               const SizedBox(height: 10),
@@ -266,4 +348,24 @@ class OrderPlacedScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Asks the customer for the sender number / reference (optional). Returns null if cancelled.
+Future<String?> askTransferRef(BuildContext context) async {
+  final c = TextEditingController();
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      backgroundColor: C.bg,
+      title: Text(tr('تأكيد التحويل', 'Confirm transfer')),
+      content: TextField(controller: c, keyboardType: TextInputType.phone, textDirection: TextDirection.ltr, decoration: InputDecoration(labelText: tr('رقم المحفظة اللي حوّلت منها (اختياري)', 'Wallet number you sent from (optional)'))),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('رجوع', 'Back'), style: const TextStyle(color: C.mute))),
+        TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('أيوه حوّلت', 'Yes, sent'), style: const TextStyle(fontWeight: FontWeight.w800))),
+      ],
+    ),
+  );
+  final r = c.text.trim();
+  c.dispose();
+  return ok == true ? r : null;
 }

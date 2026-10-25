@@ -32,9 +32,9 @@ class Api {
     await signIn(email, password);
   }
 
-  static Future<String> placeOrder({required String name, required String phone, required String address, required String city, String? notes, String? coupon, double? lat, double? lng}) async {
+  static Future<String> placeOrder({required String name, required String phone, required String address, required String city, String? notes, String? coupon, double? lat, double? lng, String payment = 'cod'}) async {
     final items = App.i.cart.map((l) => {'variant_id': l.variantId, 'qty': l.qty}).toList();
-    final id = await db.rpc('place_order_v2', params: {
+    final id = await db.rpc('place_order_v3', params: {
       'p_items': items,
       'p_name': name,
       'p_phone': phone,
@@ -44,6 +44,7 @@ class Api {
       'p_coupon': coupon,
       'p_lat': lat,
       'p_lng': lng,
+      'p_payment': payment,
     });
     return id as String;
   }
@@ -118,6 +119,11 @@ class Api {
     final r = await db.rpc('track_order', params: {'p_no': n, 'p_phone': phone});
     return r == null ? null : Json.from(r);
   }
+
+  static Future<void> walletMarkSent(String order, {String? ref}) async => db.rpc('wallet_mark_sent', params: {'p_order': order, 'p_ref': ref});
+  static Future<void> confirmPayment(String order) async => db.rpc('confirm_payment', params: {'p_order': order});
+  static Future<List<Json>> listDrivers() async => ((await db.rpc('list_drivers')) as List).map((e) => Json.from(e)).toList();
+  static Future<void> assignDriver(String order, String? driver) async => db.rpc('assign_driver', params: {'p_order': order, 'p_driver': driver});
 
   static Future<void> courierPing(String order, double lat, double lng) async =>
       db.rpc('courier_ping', params: {'p_order': order, 'p_lat': lat, 'p_lng': lng});

@@ -19,6 +19,10 @@ dependencies:
   geolocator: ^13.0.2
   flutter_map: ^7.0.2
   latlong2: ^0.9.1
+  pdf: ^3.11.1
+  printing: ^5.13.2
+  excel: ^4.0.6
+  file_picker: ^8.1.2
 
 dev_dependencies:
   flutter_test:

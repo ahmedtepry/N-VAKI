@@ -25,6 +25,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       (tr('نظرة عامة', 'Overview'), Icons.insights_rounded, const OverviewTab()),
     ];
     if (a.can('orders_view')) all.add((tr('الطلبات', 'Orders'), Icons.inventory_2_outlined, const OrdersTab()));
+    if (a.can('driver')) all.add((tr('توصيلاتي', 'Deliveries'), Icons.two_wheeler_outlined, const DeliveriesTab()));
     if (a.can('chat')) all.add((tr('المحادثات', 'Inbox'), Icons.forum_outlined, const InboxTab()));
     if (a.can('catalog_edit') || a.can('prices_edit') || a.can('stock_edit')) all.add((tr('الكتالوج', 'Catalog'), Icons.checkroom_outlined, const CatalogTab()));
     if (a.can('customers_view')) all.add((tr('العملاء', 'Customers'), Icons.people_outline_rounded, const CustomersTab()));

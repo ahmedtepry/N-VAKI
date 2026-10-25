@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../core/api.dart';
 import '../core/app.dart';
 import '../core/common.dart';
+import '../core/invoice.dart';
 import '../core/models.dart';
 import '../core/theme.dart';
 import '../screens/track.dart';
@@ -130,6 +131,8 @@ class _OrdersTabState extends State<OrdersTab> {
                                 const SizedBox(height: 8),
                                 Row(children: [
                                   Text(money(toD(o['total'])), style: const TextStyle(fontWeight: FontWeight.w800)),
+                                  const SizedBox(width: 8),
+                                  Flexible(child: StatusChip(payLabel('${o['payment_method']}', '${o['payment_status']}'), payColor('${o['payment_method']}', '${o['payment_status']}'))),
                                   const Spacer(),
                                   Icon(Icons.person_pin_outlined, size: 15, color: who == null ? C.warn : C.mute),
                                   const SizedBox(width: 4),
@@ -184,7 +187,7 @@ class _OrderManageScreenState extends State<OrderManageScreen> {
     try {
       final r = Json.from(await App.i.db.from('orders').select('*, order_items(*)').eq('id', widget.orderId).single());
       final h = await Api.orderHistory(widget.orderId);
-      final ids = <String>{if (r['assigned_to'] != null) r['assigned_to'] as String, ...h.map((e) => e['changed_by']).whereType<String>()};
+      final ids = <String>{if (r['assigned_to'] != null) r['assigned_to'] as String, if (r['driver_id'] != null) r['driver_id'] as String, ...h.map((e) => e['changed_by']).whereType<String>()};
       final p = await Api.profilesByIds(ids);
       if (mounted) setState(() {
             o = r;
@@ -205,8 +208,107 @@ class _OrderManageScreenState extends State<OrderManageScreen> {
       'shipped': ['delivered', 'cancelled'],
     };
     final l = m[s] ?? <String>[];
+    if (!App.i.can('orders_manage')) return l.where((e) => e == 'shipped' || e == 'delivered').toList();
     if (App.i.role == 'support') return l.where((e) => e == 'confirmed' || e == 'cancelled').toList();
     return l;
+  }
+
+  Widget _paymentPanel(Json d) {
+    final method = '${d['payment_method']}', st = '${d['payment_status']}';
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(color: C.card, borderRadius: BorderRadius.circular(14), border: Border.all(color: st == 'sent' ? C.warn : C.line, width: st == 'sent' ? 1.5 : 1)),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          const Icon(Icons.account_balance_wallet_outlined, size: 18),
+          const SizedBox(width: 8),
+          Expanded(child: Text(tr('الدفع', 'Payment'), style: const TextStyle(fontWeight: FontWeight.w900))),
+          StatusChip(payLabel(method, st), payColor(method, st)),
+        ]),
+        if (method == 'wallet') ...[
+          const SizedBox(height: 8),
+          Text(tr('المطلوب ${money(toD(d['total']))} على محفظة ${App.i.walletNumber}', 'Expected ${money(toD(d['total']))} on wallet ${App.i.walletNumber}'), style: const TextStyle(height: 1.4, fontSize: 12.5)),
+          if ((d['wallet_ref'] ?? '').toString().isNotEmpty) Text(tr('حوّل من: ${d['wallet_ref']}', 'Sent from: ${d['wallet_ref']}'), textDirection: TextDirection.ltr, style: const TextStyle(color: C.mute, fontSize: 12)),
+          if (st != 'paid' && d['status'] != 'cancelled' && App.i.can('orders_manage')) ...[
+            const SizedBox(height: 10),
+            NeonButton(tr('تأكيد استلام الدفع', 'Confirm payment received'), icon: Icons.verified_outlined, loading: busy, onPressed: busy ? null : () async {
+              setState(() => busy = true);
+              try {
+                await Api.confirmPayment(widget.orderId);
+                await _load();
+              } catch (e) {
+                toastError(e);
+              } finally {
+                if (mounted) setState(() => busy = false);
+              }
+            }),
+          ],
+        ],
+      ]),
+    );
+  }
+
+  Widget _driverPanel(Json d) {
+    final who = people[d['driver_id']];
+    final open = d['status'] != 'delivered' && d['status'] != 'cancelled';
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(color: C.card, borderRadius: BorderRadius.circular(14), border: Border.all(color: C.line)),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          const Icon(Icons.two_wheeler_outlined, size: 18),
+          const SizedBox(width: 8),
+          Expanded(child: Text(tr('السائق', 'Driver'), style: const TextStyle(fontWeight: FontWeight.w900))),
+          Text(who == null ? tr('لسه متحددش', 'Not assigned') : '${who['full_name']}', style: TextStyle(color: who == null ? C.warn : C.ink, fontWeight: FontWeight.w700)),
+        ]),
+        if (App.i.can('drivers_assign') && open) ...[
+          const SizedBox(height: 10),
+          NeonButton(who == null ? tr('تعيين سائق', 'Assign a driver') : tr('تغيير السائق', 'Change driver'), icon: Icons.person_add_alt_1_outlined, outline: true, onPressed: _pickDriver),
+        ],
+      ]),
+    );
+  }
+
+  Future<void> _pickDriver() async {
+    List<Json> drivers;
+    try {
+      drivers = await Api.listDrivers();
+    } catch (e) {
+      toastError(e);
+      return;
+    }
+    if (!mounted) return;
+    final pick = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: C.bg,
+      builder: (ctx) => SafeArea(
+        child: ListView(shrinkWrap: true, padding: const EdgeInsets.all(16), children: [
+          Text(tr('اختار السائق', 'Choose a driver'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+          const SizedBox(height: 8),
+          if (drivers.isEmpty) Padding(padding: const EdgeInsets.all(12), child: Text(tr('مفيش سواقين. فعّل صلاحية "سائق توصيل" لأي عضو من تبويب الفريق.', 'No drivers yet. Turn on the "Delivery driver" permission for a team member.'), style: const TextStyle(color: C.mute, height: 1.4))),
+          for (final x in drivers)
+            ListTile(
+              leading: Container(width: 10, height: 10, decoration: BoxDecoration(color: x['online'] == true ? C.ok : C.line, shape: BoxShape.circle)),
+              title: Text('${x['full_name']}', style: const TextStyle(fontWeight: FontWeight.w700)),
+              subtitle: Text(tr('توصيلات حالية: ${x['active']}', 'Active deliveries: ${x['active']}')),
+              onTap: () => Navigator.pop(ctx, x['id'] as String),
+            ),
+          if (o?['driver_id'] != null) ListTile(leading: const Icon(Icons.close, color: C.danger), title: Text(tr('إلغاء التعيين', 'Unassign'), style: const TextStyle(color: C.danger)), onTap: () => Navigator.pop(ctx, '')),
+        ]),
+      ),
+    );
+    if (pick == null) return;
+    setState(() => busy = true);
+    try {
+      await Api.assignDriver(widget.orderId, pick.isEmpty ? null : pick);
+      await _load();
+    } catch (e) {
+      toastError(e);
+    } finally {
+      if (mounted) setState(() => busy = false);
+    }
   }
 
   Future<void> _set(String status) async {
@@ -272,6 +374,8 @@ class _OrderManageScreenState extends State<OrderManageScreen> {
                       Text('${d['phone']}', textDirection: TextDirection.ltr, style: const TextStyle(color: C.mute, fontSize: 12)),
                     ]),
                   ),
+                  _paymentPanel(d),
+                  _driverPanel(d),
                   DeliveryPanel(order: d, onChanged: _load),
                   const SizedBox(height: 16),
                   for (final it in (d['order_items'] as List).map((e) => Json.from(e)))
@@ -291,6 +395,9 @@ class _OrderManageScreenState extends State<OrderManageScreen> {
                   Row(children: [Text(tr('الإجمالي', 'Total'), style: const TextStyle(fontWeight: FontWeight.w900)), const Spacer(), Text(money(toD(d['total'])), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17))]),
                   const SizedBox(height: 4),
                   Text(tr('المسؤول: ${people[d['assigned_to']]?['full_name'] ?? 'لسه محدش'}', 'Owner: ${people[d['assigned_to']]?['full_name'] ?? 'nobody yet'}'), style: const TextStyle(color: C.mute, fontSize: 12)),
+                  const SizedBox(height: 12),
+                  if (App.i.can('orders_view'))
+                    NeonButton(tr('فاتورة / أمر تجهيز PDF', 'Prep sheet / invoice PDF'), icon: Icons.picture_as_pdf_outlined, outline: true, onPressed: () => shareInvoice(d, staff: true, driverName: people[d['driver_id']]?['full_name'])),
                   const SizedBox(height: 18),
                   if (nextStatuses.isNotEmpty)
                     for (final s in nextStatuses)
@@ -439,5 +546,92 @@ class _InboxTabState extends State<InboxTab> {
                       ),
       ),
     ]);
+  }
+}
+
+
+// ===================================================== MY DELIVERIES (drivers) =====================================================
+class DeliveriesTab extends StatefulWidget {
+  const DeliveriesTab();
+  @override
+  State<DeliveriesTab> createState() => _DeliveriesTabState();
+}
+
+class _DeliveriesTabState extends State<DeliveriesTab> {
+  List<Json> rows = [];
+  Object? error;
+  bool loaded = false;
+  Timer? t;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+    t = Timer.periodic(const Duration(seconds: 15), (_) => _load());
+  }
+
+  @override
+  void dispose() {
+    t?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    try {
+      final r = await App.i.db.from('orders').select().eq('driver_id', App.i.user!.id).not('status', 'in', '(delivered,cancelled)').order('created_at');
+      if (mounted) setState(() {
+            rows = r.map((e) => Json.from(e)).toList();
+            loaded = true;
+            error = null;
+          });
+    } catch (e) {
+      if (mounted && !loaded) setState(() => error = e);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (error != null) return ErrorRetry(error!, _load);
+    if (!loaded) return const Loading();
+    if (rows.isEmpty) return Empty(tr('مفيش توصيلات ليك دلوقتي.', 'No deliveries for you right now.'), icon: Icons.two_wheeler_outlined);
+    return RefreshIndicator(
+      onRefresh: _load,
+      color: C.ink,
+      child: ListView.separated(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+        itemCount: rows.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 10),
+        itemBuilder: (_, i) {
+          final o = rows[i];
+          return InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: () async {
+              await Navigator.of(context).push(fadeRoute(OrderManageScreen(orderId: o['id'])));
+              _load();
+            },
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(color: C.card, borderRadius: BorderRadius.circular(14), border: Border.all(color: C.line)),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  Text('#${o['order_no']}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                  const SizedBox(width: 10),
+                  Expanded(child: Text(o['customer_name'], overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600))),
+                  StatusChip(statusLabel(o['status']), statusColor(o['status'])),
+                ]),
+                const SizedBox(height: 6),
+                Text('${o['city']} - ${o['address']}', style: const TextStyle(color: C.mute, height: 1.35)),
+                const SizedBox(height: 6),
+                Row(children: [
+                  Text(money(toD(o['total'])), style: const TextStyle(fontWeight: FontWeight.w800)),
+                  const SizedBox(width: 8),
+                  Flexible(child: StatusChip(payLabel('${o['payment_method']}', '${o['payment_status']}'), payColor('${o['payment_method']}', '${o['payment_status']}'))),
+                ]),
+              ]),
+            ),
+          );
+        },
+      ),
+    );
   }
 }

@@ -21,6 +21,8 @@ const permCatalog = [
   PermInfo('customers_view', 'مشاهدة العملاء', 'View customers', 'يشوف قائمة العملاء وإجمالي مشترياتهم', 'See the customer list and spending', Icons.people_outline_rounded),
   PermInfo('customers_block', 'حظر العملاء', 'Block customers', 'يحظر عميل أو يرجّعه', 'Block or unblock a customer', Icons.block_outlined),
   PermInfo('reports_view', 'التقارير والمبيعات', 'Reports & sales', 'يشوف المبيعات والإيرادات', 'See sales and revenue', Icons.insights_rounded),
+  PermInfo('drivers_assign', 'توزيع الطلبات على السواقين', 'Assign drivers', 'يحدد السائق المسؤول عن كل طلب', 'Choose the driver for each order', Icons.two_wheeler_outlined),
+  PermInfo('driver', 'سائق توصيل', 'Delivery driver', 'يشوف الطلبات المسلّمة له ويحدّث التوصيل ويشارك موقعه', 'Sees orders assigned to him, updates delivery and shares his location', Icons.delivery_dining_outlined),
 ];
 
 PermInfo? permInfo(String key) {

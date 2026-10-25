@@ -179,15 +179,15 @@ const orderStatuses = ['new', 'confirmed', 'packed', 'shipped', 'delivered', 'ca
 String statusLabel(String s) {
   switch (s) {
     case 'new':
-      return tr('جديد', 'New');
+      return tr('طلب جديد', 'New');
     case 'confirmed':
       return tr('تم التأكيد', 'Confirmed');
     case 'packed':
-      return tr('جاري التجهيز', 'Packed');
+      return tr('بنجهّز الطلب', 'Preparing');
     case 'shipped':
       return tr('في الطريق', 'Shipped');
     case 'delivered':
-      return tr('تم التسليم', 'Delivered');
+      return tr('تم استلام الطلب', 'Received');
     default:
       return tr('ملغي', 'Cancelled');
   }
@@ -208,6 +208,18 @@ Color statusColor(String s) {
     default:
       return const Color(0xFFD92D20);
   }
+}
+
+String payLabel(String method, String status) {
+  if (status == 'paid') return tr('تم الدفع', 'Paid');
+  if (method == 'wallet') return status == 'sent' ? tr('محفظة · في انتظار التأكيد', 'Wallet · awaiting check') : tr('محفظة · في انتظار التحويل', 'Wallet · awaiting transfer');
+  return tr('الدفع عند الاستلام', 'Cash on delivery');
+}
+
+Color payColor(String method, String status) {
+  if (status == 'paid') return const Color(0xFF12B76A);
+  if (method == 'wallet') return const Color(0xFFF79009);
+  return const Color(0xFF86696C);
 }
 
 String roleLabel(String r) {

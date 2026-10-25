@@ -43,12 +43,6 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   late LatLng center = widget.initial ?? kCairo;
   bool locating = false;
 
-  @override
-  void initState() {
-    super.initState();
-    if (widget.initial == null) WidgetsBinding.instance.addPostFrameCallback((_) => _me());
-  }
-
   Future<void> _me() async {
     setState(() => locating = true);
     final p = await currentLocation();

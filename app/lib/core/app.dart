@@ -85,10 +85,11 @@ class App extends ChangeNotifier {
   }
 
   // ---- team permissions (enforced again on the server) ----
-  static const allPerms = ['orders_view', 'orders_manage', 'chat', 'catalog_edit', 'prices_edit', 'stock_edit', 'categories_edit', 'sizes_edit', 'coupons_edit', 'settings_edit', 'customers_view', 'customers_block', 'reports_view'];
+  static const allPerms = ['orders_view', 'orders_manage', 'chat', 'catalog_edit', 'prices_edit', 'stock_edit', 'categories_edit', 'sizes_edit', 'coupons_edit', 'settings_edit', 'customers_view', 'customers_block', 'reports_view', 'drivers_assign', 'driver'];
   List<String> get perms => role == 'owner' ? allPerms : ((profile?['perms'] as List?) ?? const []).map((e) => '$e').toList();
   bool can(String p) => isStaff && perms.contains(p);
 
+  String get walletNumber => settings['wallet_number'] ?? '01118819464';
   double get shippingFee => double.tryParse(settings['shipping_fee'] ?? '') ?? 60;
   double get freeOver => double.tryParse(settings['free_shipping_over'] ?? '') ?? 1500;
 
