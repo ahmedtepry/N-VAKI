@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -7,7 +6,6 @@ import 'api.dart' show Json;
 import 'app.dart';
 import 'common.dart';
 import 'models.dart';
-import 'theme.dart';
 
 const _wine = PdfColor.fromInt(0xFF6E2A35);
 const _rose = PdfColor.fromInt(0xFFEBDAD7);
