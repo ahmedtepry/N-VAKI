@@ -7,6 +7,7 @@ import '../core/models.dart';
 import '../core/theme.dart';
 import '../widgets/garment.dart';
 import '../widgets/navbar.dart';
+import 'auth.dart' show requireLogin;
 import 'location_picker.dart';
 import 'orders.dart';
 import 'package:latlong2/latlong.dart';
@@ -70,7 +71,9 @@ class CartScreen extends StatelessWidget {
                         const Divider(height: 18),
                         _row(tr('الإجمالي', 'Total'), money(a.cartSubtotal + a.cartShipping), bold: true),
                         const SizedBox(height: 12),
-                        NeonButton(tr('إتمام الطلب', 'Checkout'), onPressed: () => Navigator.of(context).push(fadeRoute(const CheckoutScreen()))),
+                        NeonButton(tr('إتمام الطلب', 'Checkout'), onPressed: () async {
+                          if (await requireLogin(context) && context.mounted) Navigator.of(context).push(fadeRoute(const CheckoutScreen()));
+                        }),
                       ]),
                     ),
                   ),

@@ -10,6 +10,7 @@ import 'account.dart';
 import 'cart.dart';
 import 'notifications.dart';
 import 'product.dart';
+import 'auth.dart' show requireLogin;
 import 'staff_access.dart';
 import '../widgets/navbar.dart';
 
@@ -195,7 +196,9 @@ class _HomeScreenState extends State<HomeScreen> {
             }
           });
         }),
-        ic(Icons.notifications_none_rounded, () => Navigator.of(context).push(fadeRoute(const NotificationsScreen())), badge: App.i.unread),
+        ic(Icons.notifications_none_rounded, () async {
+          if (await requireLogin(context) && context.mounted) Navigator.of(context).push(fadeRoute(const NotificationsScreen()));
+        }, badge: App.i.unread),
       ]),
     );
   }

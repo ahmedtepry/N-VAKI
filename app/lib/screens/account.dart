@@ -19,6 +19,28 @@ class AccountScreen extends StatelessWidget {
       listenable: App.i,
       builder: (context, _) {
         final a = App.i;
+        if (a.user == null) {
+          return Scaffold(
+            appBar: AppBar(title: Text(tr('حسابي', 'ACCOUNT'))),
+            bottomNavigationBar: const NavBar(current: 3),
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(Icons.person_outline_rounded, size: 56, color: C.mute),
+                  const SizedBox(height: 14),
+                  Text(tr('إنت بتتصفح كزائر', 'You are browsing as a guest'), style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900)),
+                  const SizedBox(height: 8),
+                  Text(tr('سجّل دخولك عشان تطلب وتتابع طلباتك وتكلم خدمة العملاء.', 'Sign in to order, follow your orders and chat with support.'), textAlign: TextAlign.center, style: TextStyle(color: C.mute, height: 1.5)),
+                  const SizedBox(height: 22),
+                  NeonButton(tr('تسجيل الدخول / إنشاء حساب', 'Sign in / Create account'), onPressed: () => Navigator.of(context).pushAndRemoveUntil(fadeRoute(const AuthScreen()), (_) => false)),
+                  const SizedBox(height: 10),
+                  NeonButton(tr('تتبّع طلب برقمه', 'Track an order by number'), outline: true, icon: Icons.local_shipping_outlined, onPressed: () => Navigator.of(context).push(fadeRoute(const GuestTrackScreen()))),
+                ]),
+              ),
+            ),
+          );
+        }
         final initial = a.name.isEmpty ? '?' : a.name.characters.first.toUpperCase();
         return Scaffold(
           appBar: AppBar(title: Text(tr('حسابي', 'ACCOUNT'))),

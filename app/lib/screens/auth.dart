@@ -9,6 +9,25 @@ import 'home.dart';
 import 'staff_access.dart';
 import 'track.dart';
 
+/// Guests can browse and fill a bag; anything tied to an account asks them to sign in first.
+Future<bool> requireLogin(BuildContext context) async {
+  if (App.i.user != null) return true;
+  final go = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      backgroundColor: C.bg,
+      title: Text(tr('سجّل دخولك الأول', 'Sign in first')),
+      content: Text(tr('عشان تكمّل لازم يكون عندك حساب. الشنطة هتفضل زي ما هي.', 'You need an account to continue. Your bag stays as it is.'), style: const TextStyle(height: 1.5)),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('رجوع', 'Back'), style: TextStyle(color: C.mute))),
+        TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('تسجيل الدخول', 'Sign in'), style: const TextStyle(fontWeight: FontWeight.w800))),
+      ],
+    ),
+  );
+  if (go == true && context.mounted) Navigator.of(context).pushAndRemoveUntil(fadeRoute(const AuthScreen()), (_) => false);
+  return false;
+}
+
 class AuthScreen extends StatefulWidget {
   const AuthScreen();
   @override
@@ -147,6 +166,12 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                       register ? tr('عندي حساب بالفعل', 'I already have an account') : tr('مفيش عندي حساب؟ سجّل دلوقتي', 'New here? Create an account'),
                       style: TextStyle(color: C.ink, fontWeight: FontWeight.w700),
                     ),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: busy ? null : () => Navigator.of(context).pushAndRemoveUntil(fadeRoute(const HomeScreen()), (_) => false),
+                    icon: const Icon(Icons.storefront_outlined, size: 18),
+                    label: Text(tr('تصفّح كزائر', 'Browse as a guest'), style: const TextStyle(fontWeight: FontWeight.w800)),
+                    style: OutlinedButton.styleFrom(foregroundColor: C.ink, side: BorderSide(color: C.ink), minimumSize: const Size.fromHeight(46), shape: const StadiumBorder()),
                   ),
                   TextButton.icon(
                     onPressed: busy ? null : () => Navigator.of(context).push(fadeRoute(const GuestTrackScreen())),
