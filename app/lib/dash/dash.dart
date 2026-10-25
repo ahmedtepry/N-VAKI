@@ -16,23 +16,50 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  int tab = 0;
+  String cur = 'overview'; // section id, or 'panel' for the control panel
   Timer? presence;
+  static const maxPinned = 4;
 
-  List<(String, IconData, Widget)> get tabs {
+  /// Every section this person may open, in the order they arranged them.
+  List<(String, String, IconData, Widget)> get sections {
     final a = App.i;
-    final all = <(String, IconData, Widget)>[
-      (tr('نظرة عامة', 'Overview'), Icons.insights_rounded, const OverviewTab()),
+    final all = <(String, String, IconData, Widget)>[
+      ('overview', tr('نظرة عامة', 'Overview'), Icons.insights_rounded, const OverviewTab()),
     ];
-    if (a.can('orders_view')) all.add((tr('الطلبات', 'Orders'), Icons.inventory_2_outlined, const OrdersTab()));
-    if (a.can('driver')) all.add((tr('توصيلاتي', 'Deliveries'), Icons.two_wheeler_outlined, const DeliveriesTab()));
-    if (a.can('chat')) all.add((tr('المحادثات', 'Inbox'), Icons.forum_outlined, const InboxTab()));
-    if (a.can('catalog_edit') || a.can('prices_edit') || a.can('stock_edit')) all.add((tr('الكتالوج', 'Catalog'), Icons.checkroom_outlined, const CatalogTab()));
-    if (a.can('customers_view')) all.add((tr('العملاء', 'Customers'), Icons.people_outline_rounded, const CustomersTab()));
-    if (a.can('coupons_edit')) all.add((tr('كوبونات', 'Coupons'), Icons.confirmation_number_outlined, const CouponsTab()));
-    if (a.can('settings_edit') || a.can('categories_edit') || a.can('sizes_edit')) all.add((tr('الإعدادات', 'Settings'), Icons.tune_rounded, const SettingsTab()));
-    if (a.role == 'owner') all.add((tr('الفريق', 'Team'), Icons.groups_outlined, const TeamTab()));
+    if (a.can('orders_view')) all.add(('orders', tr('الطلبات', 'Orders'), Icons.inventory_2_outlined, const OrdersTab()));
+    if (a.can('driver')) all.add(('deliveries', tr('توصيلاتي', 'Deliveries'), Icons.two_wheeler_outlined, const DeliveriesTab()));
+    if (a.can('chat')) all.add(('inbox', tr('المحادثات', 'Inbox'), Icons.forum_outlined, const InboxTab()));
+    if (a.can('catalog_edit') || a.can('prices_edit') || a.can('stock_edit')) all.add(('catalog', tr('الكتالوج', 'Catalog'), Icons.checkroom_outlined, const CatalogTab()));
+    if (a.can('customers_view')) all.add(('customers', tr('العملاء', 'Customers'), Icons.people_outline_rounded, const CustomersTab()));
+    if (a.can('coupons_edit')) all.add(('coupons', tr('كوبونات', 'Coupons'), Icons.confirmation_number_outlined, const CouponsTab()));
+    if (a.can('settings_edit') || a.can('categories_edit') || a.can('sizes_edit')) all.add(('settings', tr('الإعدادات', 'Settings'), Icons.tune_rounded, const SettingsTab()));
+    if (a.role == 'owner') all.add(('team', tr('الفريق', 'Team'), Icons.groups_outlined, const TeamTab()));
+    final saved = a.prefs.getStringList('dash_order') ?? const <String>[];
+    all.sort((x, y) {
+      final i = saved.indexOf(x.$1), j = saved.indexOf(y.$1);
+      return (i < 0 ? 999 : i).compareTo(j < 0 ? 999 : j);
+    });
     return all;
+  }
+
+  /// Sections pinned to the bottom bar (at most [maxPinned]); the rest live in the control panel.
+  List<String> pinnedIds(List<(String, String, IconData, Widget)> secs) {
+    final ids = secs.map((e) => e.$1).toSet();
+    final saved = App.i.prefs.getStringList('dash_pinned');
+    final p = (saved ?? const ['overview', 'orders', 'deliveries', 'inbox']).where(ids.contains).toList();
+    final out = p.take(maxPinned).toList();
+    if (out.isEmpty) out.addAll(secs.take(3).map((e) => e.$1));
+    return out;
+  }
+
+  void _savePinned(List<String> ids) {
+    App.i.prefs.setStringList('dash_pinned', ids);
+    setState(() {});
+  }
+
+  void _saveOrder(List<String> ids) {
+    App.i.prefs.setStringList('dash_order', ids);
+    setState(() {});
   }
 
   @override
@@ -52,25 +79,109 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final t = tabs;
-    final i = tab.clamp(0, t.length - 1);
+    final secs = sections;
+    final pinned = pinnedIds(secs);
+    if (cur != 'panel' && !secs.any((e) => e.$1 == cur)) cur = secs.first.$1;
+    final byId = {for (final e in secs) e.$1: e};
+    final panelIndex = secs.length;
+    final bodyIndex = cur == 'panel' ? panelIndex : secs.indexWhere((e) => e.$1 == cur);
+    final navIndex = pinned.contains(cur) ? pinned.indexOf(cur) : pinned.length;
     return Scaffold(
       appBar: AppBar(
-        title: Text(t[i].$1.toUpperCase()),
+        title: Text((cur == 'panel' ? tr('لوحة التحكم', 'Control panel') : byId[cur]!.$2).toUpperCase()),
         actions: [
           Padding(padding: const EdgeInsetsDirectional.only(end: 14), child: Center(child: StatusChip(roleLabel(App.i.role), C.ink))),
         ],
       ),
-      body: IndexedStack(index: i, children: [for (final e in t) e.$3]),
+      body: IndexedStack(index: bodyIndex, children: [
+        for (final e in secs) e.$4,
+        _ControlPanel(
+          sections: secs,
+          pinned: pinned,
+          max: maxPinned,
+          onOpen: (id) => setState(() => cur = id),
+          onPinned: _savePinned,
+          onOrder: _saveOrder,
+        ),
+      ]),
       bottomNavigationBar: NavigationBar(
-        selectedIndex: i,
-        onDestinationSelected: (v) => setState(() => tab = v),
+        selectedIndex: navIndex,
+        onDestinationSelected: (v) => setState(() => cur = v < pinned.length ? pinned[v] : 'panel'),
         height: 66,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        destinations: [for (final e in t) NavigationDestination(icon: Icon(e.$2), label: e.$1)],
+        destinations: [
+          for (final id in pinned) NavigationDestination(icon: Icon(byId[id]!.$3), label: byId[id]!.$2),
+          NavigationDestination(icon: const Icon(Icons.dashboard_customize_outlined), selectedIcon: const Icon(Icons.dashboard_customize_rounded), label: tr('لوحة التحكم', 'Panel')),
+        ],
         indicatorColor: C.tint,
       ),
     );
+  }
+}
+
+/// All sections listed one under another: open one, drag to reorder, and pin up to four to the bottom bar.
+class _ControlPanel extends StatelessWidget {
+  final List<(String, String, IconData, Widget)> sections;
+  final List<String> pinned;
+  final int max;
+  final ValueChanged<String> onOpen;
+  final ValueChanged<List<String>> onPinned, onOrder;
+  const _ControlPanel({required this.sections, required this.pinned, required this.max, required this.onOpen, required this.onPinned, required this.onOrder});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 10),
+        child: Text(tr('اسحب أي قسم عشان ترتّبه، وادوس على الدبوس عشان يظهر في الشريط اللي تحت (لحد $max). الباقي بتلاقيه هنا.', 'Drag to reorder. Tap the pin to show a section in the bottom bar (up to $max). Everything else stays here.'), style: TextStyle(color: C.mute, fontSize: 12.5, height: 1.45)),
+      ),
+      Expanded(
+        child: ReorderableListView.builder(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+          itemCount: sections.length,
+          onReorder: (from, to) {
+            final ids = sections.map((e) => e.$1).toList();
+            if (to > from) to -= 1;
+            ids.insert(to, ids.removeAt(from));
+            onOrder(ids);
+          },
+          itemBuilder: (_, i) {
+            final e = sections[i];
+            final on = pinned.contains(e.$1);
+            return Container(
+              key: ValueKey(e.$1),
+              margin: const EdgeInsets.only(bottom: 10),
+              decoration: BoxDecoration(color: C.card, borderRadius: BorderRadius.circular(14), border: Border.all(color: on ? C.ink : C.line)),
+              child: ListTile(
+                onTap: () => onOpen(e.$1),
+                leading: ReorderableDragStartListener(index: i, child: Icon(Icons.drag_indicator_rounded, color: C.mute)),
+                title: Row(children: [Icon(e.$3, size: 20), const SizedBox(width: 10), Expanded(child: Text(e.$2, style: const TextStyle(fontWeight: FontWeight.w800)))]),
+                trailing: IconButton(
+                  tooltip: tr('تثبيت في الشريط', 'Pin to bar'),
+                  icon: Icon(on ? Icons.push_pin_rounded : Icons.push_pin_outlined, color: on ? C.neon : C.mute),
+                  onPressed: () {
+                    final next = [...pinned];
+                    if (on) {
+                      if (next.length > 1) next.remove(e.$1);
+                    } else {
+                      if (next.length >= max) {
+                        toast(tr('الشريط بياخد $max بس. شيل واحد الأول.', 'The bar holds $max. Unpin one first.'));
+                        return;
+                      }
+                      next.add(e.$1);
+                    }
+                    // keep the bar in the same order as the list
+                    final order = sections.map((x) => x.$1).toList();
+                    next.sort((a, b) => order.indexOf(a).compareTo(order.indexOf(b)));
+                    onPinned(next);
+                  },
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    ]);
   }
 }
 
