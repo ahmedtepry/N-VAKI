@@ -44,7 +44,7 @@ class CartScreen extends StatelessWidget {
                             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                               Text(l.name.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5, letterSpacing: 0.8)),
                               const SizedBox(height: 3),
-                              Text('${l.color} · ${l.size}', style: const TextStyle(color: C.mute, fontSize: 12)),
+                              Text('${l.color} · ${l.size}', style: TextStyle(color: C.mute, fontSize: 12)),
                               const SizedBox(height: 6),
                               Text(money(l.price * l.qty), style: const TextStyle(fontWeight: FontWeight.w700)),
                             ]),
@@ -60,13 +60,13 @@ class CartScreen extends StatelessWidget {
                   ),
                   Container(
                     padding: const EdgeInsets.fromLTRB(22, 14, 22, 18),
-                    decoration: const BoxDecoration(border: Border(top: BorderSide(color: C.line))),
+                    decoration: BoxDecoration(border: Border(top: BorderSide(color: C.line))),
                     child: SafeArea(
                       top: false,
                       child: Column(mainAxisSize: MainAxisSize.min, children: [
                         _row(tr('المجموع', 'Subtotal'), money(a.cartSubtotal)),
                         _row(tr('الشحن', 'Shipping'), a.cartShipping == 0 ? tr('مجاني', 'Free') : money(a.cartShipping)),
-                        if (a.cartShipping > 0) Padding(padding: const EdgeInsets.only(bottom: 4), child: Align(alignment: AlignmentDirectional.centerStart, child: Text(tr('الشحن مجاني فوق ${money(a.freeOver)}', 'Free shipping over ${money(a.freeOver)}'), style: const TextStyle(fontSize: 11, color: C.mute)))),
+                        if (a.cartShipping > 0) Padding(padding: const EdgeInsets.only(bottom: 4), child: Align(alignment: AlignmentDirectional.centerStart, child: Text(tr('الشحن مجاني فوق ${money(a.freeOver)}', 'Free shipping over ${money(a.freeOver)}'), style: TextStyle(fontSize: 11, color: C.mute)))),
                         const Divider(height: 18),
                         _row(tr('الإجمالي', 'Total'), money(a.cartSubtotal + a.cartShipping), bold: true),
                         const SizedBox(height: 12),
@@ -189,7 +189,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
             const SizedBox(height: 2),
-            Text(sub, style: const TextStyle(color: C.mute, fontSize: 12, height: 1.3)),
+            Text(sub, style: TextStyle(color: C.mute, fontSize: 12, height: 1.3)),
           ])),
           Icon(on ? Icons.radio_button_checked : Icons.radio_button_off, color: on ? C.neon : C.line),
         ]),
@@ -228,7 +228,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   Icon(pin == null ? Icons.add_location_alt_outlined : Icons.location_on, color: pin == null ? C.ink : C.neon),
                   const SizedBox(width: 10),
                   Expanded(child: Text(pin == null ? tr('حدّد موقع التوصيل على الخريطة (اختياري، بيسهّل على المندوب)', 'Pin the delivery spot on the map (optional, helps the courier)') : tr('تم تحديد الموقع ✓ — دوس للتعديل', 'Location pinned ✓ — tap to change'), style: const TextStyle(fontWeight: FontWeight.w700, height: 1.35))),
-                  const Icon(Icons.chevron_right_rounded, color: C.mute),
+                  Icon(Icons.chevron_right_rounded, color: C.mute),
                 ]),
               ),
             ),
@@ -240,7 +240,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ]),
             if (discount > 0) Padding(padding: const EdgeInsets.only(top: 8), child: Text(tr('الخصم: -${money(discount)}', 'Discount: -${money(discount)}'), style: const TextStyle(color: C.ok, fontWeight: FontWeight.w800))),
             const SizedBox(height: 22),
-            Text(tr('طريقة الدفع', 'PAYMENT'), style: const TextStyle(fontSize: 11, color: C.mute, letterSpacing: 1.4, fontWeight: FontWeight.w800)),
+            Text(tr('طريقة الدفع', 'PAYMENT'), style: TextStyle(fontSize: 11, color: C.mute, letterSpacing: 1.4, fontWeight: FontWeight.w800)),
             const SizedBox(height: 8),
             _payOption('cod', Icons.payments_outlined, tr('الدفع عند الاستلام', 'Cash on delivery'), tr('تدفع للمندوب لما الطلب يوصلك', 'Pay the courier when it arrives')),
             const SizedBox(height: 10),
@@ -260,7 +260,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       toast(tr('اتنسخ الرقم', 'Number copied'));
                     }, icon: const Icon(Icons.copy_rounded, size: 20)),
                   ]),
-                  Text(tr('فريقنا هيوصله إشعار بطلبك فورًا.', 'Our team is notified of your order right away.'), style: const TextStyle(color: C.mute, fontSize: 12)),
+                  Text(tr('فريقنا هيوصله إشعار بطلبك فورًا.', 'Our team is notified of your order right away.'), style: TextStyle(color: C.mute, fontSize: 12)),
                 ]),
               ),
             const SizedBox(height: 14),
@@ -300,15 +300,15 @@ class _OrderPlacedScreenState extends State<OrderPlacedScreen> {
           child: Padding(
             padding: const EdgeInsets.all(32),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Container(width: 84, height: 84, decoration: const BoxDecoration(color: C.neon, shape: BoxShape.circle), child: const Icon(Icons.check_rounded, size: 48, color: C.onNeon)),
+              Container(width: 84, height: 84, decoration: BoxDecoration(color: C.neon, shape: BoxShape.circle), child: Icon(Icons.check_rounded, size: 48, color: C.onNeon)),
               const SizedBox(height: 22),
               Text(tr('تم استلام طلبك', 'ORDER RECEIVED'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 1.6)),
               const SizedBox(height: 8),
               Text('#$orderNo', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900)),
               const SizedBox(height: 6),
-              Text(money(total), style: const TextStyle(color: C.mute)),
+              Text(money(total), style: TextStyle(color: C.mute)),
               const SizedBox(height: 14),
-              Text(tr('فريقنا هيراجع الطلب ويأكده معاك. هتوصلك إشعارات بكل تحديث.', 'Our team will review and confirm it. You will get a notification on every update.'), textAlign: TextAlign.center, style: const TextStyle(color: C.mute, height: 1.5)),
+              Text(tr('فريقنا هيراجع الطلب ويأكده معاك. هتوصلك إشعارات بكل تحديث.', 'Our team will review and confirm it. You will get a notification on every update.'), textAlign: TextAlign.center, style: TextStyle(color: C.mute, height: 1.5)),
               if (widget.wallet) ...[
                 const SizedBox(height: 18),
                 Container(
@@ -360,7 +360,7 @@ Future<String?> askTransferRef(BuildContext context) async {
       title: Text(tr('تأكيد التحويل', 'Confirm transfer')),
       content: TextField(controller: c, keyboardType: TextInputType.phone, textDirection: TextDirection.ltr, decoration: InputDecoration(labelText: tr('رقم المحفظة اللي حوّلت منها (اختياري)', 'Wallet number you sent from (optional)'))),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('رجوع', 'Back'), style: const TextStyle(color: C.mute))),
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('رجوع', 'Back'), style: TextStyle(color: C.mute))),
         TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('أيوه حوّلت', 'Yes, sent'), style: const TextStyle(fontWeight: FontWeight.w800))),
       ],
     ),

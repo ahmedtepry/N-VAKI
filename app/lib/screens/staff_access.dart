@@ -88,7 +88,7 @@ class _StaffDialogState extends State<_StaffDialog> {
         if (err != null) Padding(padding: const EdgeInsets.only(top: 10), child: Text(err!, style: const TextStyle(color: C.danger, fontSize: 12.5))),
       ]),
       actions: [
-        TextButton(onPressed: busy ? null : () => Navigator.of(context).pop(false), child: Text(tr('إلغاء', 'Cancel'), style: const TextStyle(color: C.mute))),
+        TextButton(onPressed: busy ? null : () => Navigator.of(context).pop(false), child: Text(tr('إلغاء', 'Cancel'), style: TextStyle(color: C.mute))),
         TextButton(onPressed: busy ? null : _go, child: busy ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)) : Text(tr('دخول', 'Enter'), style: const TextStyle(fontWeight: FontWeight.w900))),
       ],
     );

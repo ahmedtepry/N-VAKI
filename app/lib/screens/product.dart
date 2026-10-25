@@ -101,7 +101,7 @@ class _ProductScreenState extends State<ProductScreen> with SingleTickerProvider
       listenable: App.i,
       builder: (context, _) => Scaffold(
         appBar: AppBar(
-          title: Text('${i + 1} / ${widget.products.length}', style: const TextStyle(fontSize: 12, letterSpacing: 2, color: C.mute)),
+          title: Text('${i + 1} / ${widget.products.length}', style: TextStyle(fontSize: 12, letterSpacing: 2, color: C.mute)),
           actions: [
             IconButton(
               onPressed: () => App.i.toggleFav(p.id),
@@ -189,7 +189,7 @@ class _ProductScreenState extends State<ProductScreen> with SingleTickerProvider
       opacity: enabled ? 0.9 : 0.2,
       child: Material(
         color: C.bg.withValues(alpha: 0.7),
-        shape: const CircleBorder(side: BorderSide(color: C.ink, width: 1)),
+        shape: CircleBorder(side: BorderSide(color: C.ink, width: 1)),
         child: InkWell(customBorder: const CircleBorder(), onTap: enabled ? () => _go(d) : null, child: Padding(padding: const EdgeInsets.all(4), child: Icon(icon, size: 20))),
       ),
     );
@@ -225,7 +225,7 @@ class _ProductScreenState extends State<ProductScreen> with SingleTickerProvider
     final v = curVariant;
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 10, 24, 12),
-      decoration: const BoxDecoration(color: C.bg, border: Border(top: BorderSide(color: C.line))),
+      decoration: BoxDecoration(color: C.bg, border: Border(top: BorderSide(color: C.line))),
       child: NeonButton(
         v == null ? tr('اختار المقاس', 'Pick a size') : tr('أضف للشنطة · ${money(p.price)}', 'Add to bag · ${money(p.price)}'),
         onPressed: _add,
@@ -236,13 +236,13 @@ class _ProductScreenState extends State<ProductScreen> with SingleTickerProvider
 
   Widget _label(String t) => Padding(
         padding: const EdgeInsets.only(bottom: 8),
-        child: Text(t.toUpperCase(), style: const TextStyle(fontSize: 11, color: C.mute, letterSpacing: 1.4, fontWeight: FontWeight.w800)),
+        child: Text(t.toUpperCase(), style: TextStyle(fontSize: 11, color: C.mute, letterSpacing: 1.4, fontWeight: FontWeight.w800)),
       );
 
   Widget _kv(String k, String v) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 6),
         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          SizedBox(width: 92, child: Text(k, style: const TextStyle(fontSize: 12.5, color: C.mute))),
+          SizedBox(width: 92, child: Text(k, style: TextStyle(fontSize: 12.5, color: C.mute))),
           Expanded(child: Text(v, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, height: 1.35))),
         ]),
       );
@@ -255,7 +255,7 @@ class _ProductScreenState extends State<ProductScreen> with SingleTickerProvider
     }
     if (rows.isEmpty) return const SizedBox.shrink();
     final sel = curSize?.toUpperCase();
-    TextStyle hd() => const TextStyle(fontSize: 10.5, color: C.mute, fontWeight: FontWeight.w700);
+    TextStyle hd() => TextStyle(fontSize: 10.5, color: C.mute, fontWeight: FontWeight.w700);
     Widget cell(String t, {bool bold = false, int flex = 1}) => Expanded(flex: flex, child: Text(t, style: TextStyle(fontSize: 12.5, fontWeight: bold ? FontWeight.w900 : FontWeight.w600)));
     String n(double x) => x == x.roundToDouble() ? x.round().toString() : x.toStringAsFixed(1);
     final detail = rows.firstWhere((r) => r.size == sel, orElse: () => rows.firstWhere((r) => r.size == 'M', orElse: () => rows.first));
@@ -304,7 +304,7 @@ class _ProductScreenState extends State<ProductScreen> with SingleTickerProvider
         ]),
       ),
       const SizedBox(height: 6),
-      Text(tr('القياسات للقطعة وهي مفرودة، وممكن تختلف 1-2 سم. لو بين مقاسين خد الأكبر لو بتحب الواسع، أو الأصغر لو بتحب الضيق.', 'Measured flat on the garment, ±1-2 cm. Between sizes? Size up for a looser fit, down for a closer one.'), style: const TextStyle(fontSize: 11.5, color: C.mute, height: 1.45)),
+      Text(tr('القياسات للقطعة وهي مفرودة، وممكن تختلف 1-2 سم. لو بين مقاسين خد الأكبر لو بتحب الواسع، أو الأصغر لو بتحب الضيق.', 'Measured flat on the garment, ±1-2 cm. Between sizes? Size up for a looser fit, down for a closer one.'), style: TextStyle(fontSize: 11.5, color: C.mute, height: 1.45)),
     ]);
   }
 
@@ -324,14 +324,14 @@ class _ProductScreenState extends State<ProductScreen> with SingleTickerProvider
             Text(money(p.price), style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900)),
             if (off > 0)
               Row(mainAxisSize: MainAxisSize.min, children: [
-                Text(money(p.compareAt!), style: const TextStyle(fontSize: 11, color: C.mute, decoration: TextDecoration.lineThrough)),
+                Text(money(p.compareAt!), style: TextStyle(fontSize: 11, color: C.mute, decoration: TextDecoration.lineThrough)),
                 const SizedBox(width: 6),
-                Container(padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1), decoration: BoxDecoration(color: C.neon, borderRadius: BorderRadius.circular(4)), child: Text('-$off%', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: C.onNeon))),
+                Container(padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1), decoration: BoxDecoration(color: C.neon, borderRadius: BorderRadius.circular(4)), child: Text('-$off%', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: C.onNeon))),
               ]),
           ]),
         ]),
         const SizedBox(height: 4),
-        Text(colorName, style: const TextStyle(fontSize: 12.5, color: C.mute, letterSpacing: 0.8)),
+        Text(colorName, style: TextStyle(fontSize: 12.5, color: C.mute, letterSpacing: 0.8)),
         const SizedBox(height: 18),
         _label(tr('المقاسات المتاحة', 'Available sizes')),
         Wrap(spacing: 10, runSpacing: 10, children: [
@@ -377,12 +377,12 @@ class _ProductScreenState extends State<ProductScreen> with SingleTickerProvider
         Row(children: [
           const Icon(Icons.local_shipping_outlined, size: 18),
           const SizedBox(width: 8),
-          Expanded(child: Text(tr('الدفع عند الاستلام · شحن ${money(App.i.shippingFee)}، ومجاني فوق ${money(App.i.freeOver)}', 'Cash on delivery · shipping ${money(App.i.shippingFee)}, free over ${money(App.i.freeOver)}'), style: const TextStyle(fontSize: 12.5, color: C.mute, height: 1.4))),
+          Expanded(child: Text(tr('الدفع عند الاستلام · شحن ${money(App.i.shippingFee)}، ومجاني فوق ${money(App.i.freeOver)}', 'Cash on delivery · shipping ${money(App.i.shippingFee)}, free over ${money(App.i.freeOver)}'), style: TextStyle(fontSize: 12.5, color: C.mute, height: 1.4))),
         ]),
         if (p.desc.isNotEmpty) ...[
           const SizedBox(height: 16),
           _label(tr('عن القطعة', 'About')),
-          Text(p.desc, style: const TextStyle(fontSize: 13, color: C.ink, height: 1.55)),
+          Text(p.desc, style: TextStyle(fontSize: 13, color: C.ink, height: 1.55)),
         ],
       ]),
     );

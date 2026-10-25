@@ -125,7 +125,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                     height: mh,
                     child: CustomPaint(painter: _MachinePainter(t)),
                   ),
-                  Positioned(left: 0, right: 0, bottom: 0, child: Opacity(opacity: word, child: Transform.translate(offset: Offset(0, 14 * (1 - word)), child: const Center(child: Wordmark(size: 28, color: C.onNeon))))),
+                  Positioned(left: 0, right: 0, bottom: 0, child: Opacity(opacity: word, child: Transform.translate(offset: Offset(0, 14 * (1 - word)), child: Center(child: Wordmark(size: 28, color: C.onNeon))))),
                 ]),
               );
             },

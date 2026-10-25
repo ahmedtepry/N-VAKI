@@ -71,7 +71,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
             const RichAttributionWidget(attributions: [TextSourceAttribution('© OpenStreetMap contributors')]),
           ],
         ),
-        const IgnorePointer(child: Center(child: Padding(padding: EdgeInsets.only(bottom: 44), child: Icon(Icons.location_on, size: 50, color: C.neon)))),
+        IgnorePointer(child: Center(child: Padding(padding: EdgeInsets.only(bottom: 44), child: Icon(Icons.location_on, size: 50, color: C.neon)))),
         Positioned(
           right: 14,
           bottom: 100,

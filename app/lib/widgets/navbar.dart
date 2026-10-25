@@ -41,7 +41,7 @@ class NavBar extends StatelessWidget {
       [Icons.person_outline_rounded, Icons.person_rounded, tr('حسابي', 'Account')],
     ];
     return Container(
-      decoration: const BoxDecoration(color: C.bg, border: Border(top: BorderSide(color: C.line))),
+      decoration: BoxDecoration(color: C.bg, border: Border(top: BorderSide(color: C.line))),
       child: SafeArea(
         top: false,
         child: SizedBox(

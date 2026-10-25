@@ -86,7 +86,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                   Text(money(toD(o['total'])), style: const TextStyle(fontWeight: FontWeight.w800)),
                                 ]),
                                 const SizedBox(height: 6),
-                                Text(fmtDate(o['created_at']), style: const TextStyle(color: C.mute, fontSize: 11)),
+                                Text(fmtDate(o['created_at']), style: TextStyle(color: C.mute, fontSize: 11)),
                               ]),
                             ),
                           );
@@ -146,7 +146,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     return Scaffold(
       appBar: AppBar(title: Text('#${o['order_no']}')),
       body: ListView(padding: const EdgeInsets.fromLTRB(22, 4, 22, 28), children: [
-        Row(children: [StatusChip(statusLabel(status), statusColor(status)), const Spacer(), Text(fmtDate(o['created_at']), style: const TextStyle(color: C.mute, fontSize: 11))]),
+        Row(children: [StatusChip(statusLabel(status), statusColor(status)), const Spacer(), Text(fmtDate(o['created_at']), style: TextStyle(color: C.mute, fontSize: 11))]),
         const SizedBox(height: 10),
         Row(children: [
           StatusChip(payLabel('${o['payment_method']}', '${o['payment_status']}'), payColor('${o['payment_method']}', '${o['payment_status']}')),
@@ -195,7 +195,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(tr(it['name_ar'], it['name_en']).toUpperCase(), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
-                  Text('${tr(it['color_name_ar'], it['color_name_en'])} · ${it['size']} · x${it['qty']}', style: const TextStyle(color: C.mute, fontSize: 12)),
+                  Text('${tr(it['color_name_ar'], it['color_name_en'])} · ${it['size']} · x${it['qty']}', style: TextStyle(color: C.mute, fontSize: 12)),
                 ]),
               ),
               Text(money(toD(it['unit_price']) * toI(it['qty'])), style: const TextStyle(fontWeight: FontWeight.w700)),
@@ -206,12 +206,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         _kv(tr('الشحن', 'Shipping'), toD(o['shipping_fee']) == 0 ? tr('مجاني', 'Free') : money(toD(o['shipping_fee']))),
         _kv(tr('الإجمالي', 'Total'), money(toD(o['total'])), bold: true),
         const Divider(height: 28),
-        Text(tr('التوصيل إلى', 'DELIVER TO').toUpperCase(), style: const TextStyle(fontSize: 11, color: C.mute, letterSpacing: 1.4)),
+        Text(tr('التوصيل إلى', 'DELIVER TO').toUpperCase(), style: TextStyle(fontSize: 11, color: C.mute, letterSpacing: 1.4)),
         const SizedBox(height: 6),
         Text('${o['customer_name']}\n${o['phone']}\n${o['city']} - ${o['address']}', style: const TextStyle(height: 1.5)),
         if (history.isNotEmpty) ...[
           const SizedBox(height: 22),
-          Text(tr('سجل الطلب', 'HISTORY'), style: const TextStyle(fontSize: 11, color: C.mute, letterSpacing: 1.4)),
+          Text(tr('سجل الطلب', 'HISTORY'), style: TextStyle(fontSize: 11, color: C.mute, letterSpacing: 1.4)),
           const SizedBox(height: 8),
           for (final h in history.reversed)
             Padding(
@@ -221,7 +221,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 const SizedBox(width: 10),
                 Text(statusLabel(h['status']), style: const TextStyle(fontWeight: FontWeight.w700)),
                 const Spacer(),
-                Text(fmtDate(h['created_at']), style: const TextStyle(color: C.mute, fontSize: 11)),
+                Text(fmtDate(h['created_at']), style: TextStyle(color: C.mute, fontSize: 11)),
               ]),
             ),
         ],
@@ -253,7 +253,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             width: 22,
             height: 22,
             decoration: BoxDecoration(color: i <= at ? C.neon : Colors.transparent, shape: BoxShape.circle, border: Border.all(color: i <= at ? C.ink : C.line, width: 1.2)),
-            child: i <= at ? const Icon(Icons.check_rounded, size: 14, color: C.onNeon) : null,
+            child: i <= at ? Icon(Icons.check_rounded, size: 14, color: C.onNeon) : null,
           ),
           const SizedBox(height: 4),
           Text(statusLabel(steps[i]), style: TextStyle(fontSize: 8.5, color: i <= at ? C.ink : C.mute, fontWeight: i == at ? FontWeight.w900 : FontWeight.w500)),

@@ -81,7 +81,7 @@ class _CatalogTabState extends State<CatalogTab> {
             backgroundColor: C.card,
             foregroundColor: C.ink,
             elevation: 0,
-            shape: const CircleBorder(side: BorderSide(color: C.ink)),
+            shape: CircleBorder(side: BorderSide(color: C.ink)),
             tooltip: tr('استيراد من إكسيل', 'Import from Excel'),
             onPressed: () async {
               await Navigator.of(context).push(fadeRoute(const ImportScreen()));
@@ -95,7 +95,7 @@ class _CatalogTabState extends State<CatalogTab> {
         backgroundColor: C.neon,
         foregroundColor: C.onNeon,
         elevation: 0,
-        shape: const StadiumBorder(side: BorderSide(color: C.ink)),
+        shape: StadiumBorder(side: BorderSide(color: C.ink)),
         onPressed: () => _open(null),
         icon: const Icon(Icons.add),
         label: Text(tr('منتج جديد', 'NEW PRODUCT'), style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
@@ -134,7 +134,7 @@ class _CatalogTabState extends State<CatalogTab> {
                                   ]),
                                 ),
                                 if (!p.active) StatusChip(tr('مخفي', 'Hidden'), C.mute),
-                                const Icon(Icons.chevron_right_rounded, color: C.mute),
+                                Icon(Icons.chevron_right_rounded, color: C.mute),
                               ]),
                             ),
                           );
@@ -314,7 +314,7 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
           TextFormField(controller: descAr, maxLines: 2, decoration: InputDecoration(labelText: tr('الوصف بالعربي', 'Description (Arabic)'))),
           TextFormField(controller: descEn, maxLines: 2, textDirection: TextDirection.ltr, decoration: InputDecoration(labelText: tr('الوصف بالإنجليزي', 'Description (English)'))),
           const SizedBox(height: 16),
-          Text(tr('النوع', 'GARMENT'), style: const TextStyle(fontSize: 11, color: C.mute, letterSpacing: 1.4)),
+          Text(tr('النوع', 'GARMENT'), style: TextStyle(fontSize: 11, color: C.mute, letterSpacing: 1.4)),
           const SizedBox(height: 8),
           Wrap(spacing: 8, runSpacing: 8, children: [
             for (final e in garments.entries)
@@ -329,7 +329,7 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
               ),
           ]),
           const SizedBox(height: 12),
-          Text(tr('القسم', 'CATEGORY'), style: const TextStyle(fontSize: 11, color: C.mute, letterSpacing: 1.4)),
+          Text(tr('القسم', 'CATEGORY'), style: TextStyle(fontSize: 11, color: C.mute, letterSpacing: 1.4)),
           const SizedBox(height: 8),
           Wrap(spacing: 8, runSpacing: 8, children: [
             for (final c in App.i.categories)
@@ -350,11 +350,11 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
           if (pr != null) ...[
             const SizedBox(height: 28),
             Row(children: [
-              Text(tr('الألوان والمخزون', 'COLOURS & STOCK'), style: const TextStyle(fontSize: 11, color: C.mute, letterSpacing: 1.4, fontWeight: FontWeight.w800)),
+              Text(tr('الألوان والمخزون', 'COLOURS & STOCK'), style: TextStyle(fontSize: 11, color: C.mute, letterSpacing: 1.4, fontWeight: FontWeight.w800)),
               const Spacer(),
-              TextButton.icon(onPressed: _addColor, icon: const Icon(Icons.add, size: 18, color: C.ink), label: Text(tr('لون', 'Colour'), style: const TextStyle(color: C.ink, fontWeight: FontWeight.w800))),
+              TextButton.icon(onPressed: _addColor, icon: Icon(Icons.add, size: 18, color: C.ink), label: Text(tr('لون', 'Colour'), style: TextStyle(color: C.ink, fontWeight: FontWeight.w800))),
             ]),
-            Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(tr('تقدر ترفع صورة حقيقية لكل لون (القطعة كاملة على خلفية بيضاء). هتتعلق على الشماعة بدل الرسم.', 'Upload a real photo per colour (whole garment on a white background). It will hang on the rack instead of the drawing.'), style: const TextStyle(color: C.mute, fontSize: 12, height: 1.4))),
+            Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(tr('تقدر ترفع صورة حقيقية لكل لون (القطعة كاملة على خلفية بيضاء). هتتعلق على الشماعة بدل الرسم.', 'Upload a real photo per colour (whole garment on a white background). It will hang on the rack instead of the drawing.'), style: TextStyle(color: C.mute, fontSize: 12, height: 1.4))),
             if (pr.colors.isEmpty) Padding(padding: const EdgeInsets.symmetric(vertical: 12), child: Text(tr('ضيف لون عشان المنتج يظهر في المتجر.', 'Add a colour so the product shows up in the store.'), style: const TextStyle(color: C.warn))),
             for (final c in pr.colors)
               Container(
@@ -367,9 +367,9 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
                     const SizedBox(width: 8),
                     Expanded(child: Text(c.color, style: const TextStyle(fontWeight: FontWeight.w800))),
                     if (c.image != null)
-                      IconButton(visualDensity: VisualDensity.compact, tooltip: tr('شيل الصورة', 'Remove photo'), onPressed: () => _removePhoto(c), icon: const Icon(Icons.hide_image_outlined, size: 19, color: C.mute)),
+                      IconButton(visualDensity: VisualDensity.compact, tooltip: tr('شيل الصورة', 'Remove photo'), onPressed: () => _removePhoto(c), icon: Icon(Icons.hide_image_outlined, size: 19, color: C.mute)),
                     IconButton(visualDensity: VisualDensity.compact, tooltip: tr('صورة', 'Photo'), onPressed: () => _photo(c), icon: Icon(c.image != null ? Icons.image : Icons.add_photo_alternate_outlined, size: 20, color: c.image != null ? C.ok : C.ink)),
-                    IconButton(visualDensity: VisualDensity.compact, onPressed: () => _deleteColor(c), icon: const Icon(Icons.close, size: 18, color: C.mute)),
+                    IconButton(visualDensity: VisualDensity.compact, onPressed: () => _deleteColor(c), icon: Icon(Icons.close, size: 18, color: C.mute)),
                   ]),
                   for (final v in pr.sizesFor(c.hex))
                     Padding(
@@ -466,7 +466,7 @@ class _AddColorSheetState extends State<_AddColorSheet> {
         if (none)
           GestureDetector(
             onTap: () => onPick(null),
-            child: Container(width: 34, height: 34, alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: current == null ? C.ink : C.line, width: current == null ? 2 : 1)), child: const Icon(Icons.block, size: 16, color: C.mute)),
+            child: Container(width: 34, height: 34, alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: current == null ? C.ink : C.line, width: current == null ? 2 : 1)), child: Icon(Icons.block, size: 16, color: C.mute)),
           ),
         for (var i = 0; i < palette.length; i++)
           GestureDetector(
@@ -484,13 +484,13 @@ class _AddColorSheetState extends State<_AddColorSheet> {
           Text(tr('إضافة لون', 'ADD COLOUR'), style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.4)),
           const SizedBox(height: 14),
           _swatches(sel, (v) => setState(() => sel = v)),
-          if (sel != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(tr(palette[sel!][0], palette[sel!][1]), style: const TextStyle(color: C.mute))),
+          if (sel != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(tr(palette[sel!][0], palette[sel!][1]), style: TextStyle(color: C.mute))),
           const SizedBox(height: 18),
-          Text(tr('لون التفاصيل (اختياري)', 'Accent colour (optional)'), style: const TextStyle(fontSize: 12, color: C.mute)),
+          Text(tr('لون التفاصيل (اختياري)', 'Accent colour (optional)'), style: TextStyle(fontSize: 12, color: C.mute)),
           const SizedBox(height: 8),
           _swatches(acc, (v) => setState(() => acc = v), none: true),
           const SizedBox(height: 18),
-          Text(tr('المقاسات', 'Sizes'), style: const TextStyle(fontSize: 12, color: C.mute)),
+          Text(tr('المقاسات', 'Sizes'), style: TextStyle(fontSize: 12, color: C.mute)),
           const SizedBox(height: 8),
           Wrap(spacing: 8, children: [
             for (final s in sizeChoices)

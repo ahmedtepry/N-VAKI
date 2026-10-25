@@ -313,7 +313,7 @@ class _ImportScreenState extends State<ImportScreen> {
                 Text(money(r.price), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
               ]),
             ),
-          if (rows.length > 6) Text(tr('... و${rows.length - 6} صف كمان', '... and ${rows.length - 6} more rows'), style: const TextStyle(color: C.mute, fontSize: 12)),
+          if (rows.length > 6) Text(tr('... و${rows.length - 6} صف كمان', '... and ${rows.length - 6} more rows'), style: TextStyle(color: C.mute, fontSize: 12)),
         ],
         if (problems.isNotEmpty) ...[
           const SizedBox(height: 14),

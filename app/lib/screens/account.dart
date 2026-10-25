@@ -25,12 +25,12 @@ class AccountScreen extends StatelessWidget {
           bottomNavigationBar: const NavBar(current: 3),
           body: ListView(padding: const EdgeInsets.fromLTRB(22, 8, 22, 30), children: [
             Row(children: [
-              Container(width: 60, height: 60, alignment: Alignment.center, decoration: const BoxDecoration(color: C.neon, shape: BoxShape.circle), child: Text(initial, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: C.onNeon))),
+              Container(width: 60, height: 60, alignment: Alignment.center, decoration: BoxDecoration(color: C.neon, shape: BoxShape.circle), child: Text(initial, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: C.onNeon))),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(a.name, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900)),
-                  Text(a.user?.email ?? '', style: const TextStyle(color: C.mute, fontSize: 12.5)),
+                  Text(a.user?.email ?? '', style: TextStyle(color: C.mute, fontSize: 12.5)),
                   if (a.isStaff) Padding(padding: const EdgeInsets.only(top: 6), child: StatusChip(roleLabel(a.role), C.ink)),
                 ]),
               ),
@@ -63,7 +63,7 @@ class AccountScreen extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), border: Border.all(color: highlight ? C.ink : C.line)),
-              child: Row(children: [Icon(i, size: 21), const SizedBox(width: 14), Expanded(child: Text(t, style: const TextStyle(fontWeight: FontWeight.w700))), const Icon(Icons.chevron_right_rounded, color: C.mute)]),
+              child: Row(children: [Icon(i, size: 21), const SizedBox(width: 14), Expanded(child: Text(t, style: const TextStyle(fontWeight: FontWeight.w700))), Icon(Icons.chevron_right_rounded, color: C.mute)]),
             ),
           ),
         ),
@@ -82,8 +82,8 @@ class AccountScreen extends StatelessWidget {
           TextField(controller: phone, keyboardType: TextInputType.phone, textDirection: TextDirection.ltr, decoration: InputDecoration(labelText: tr('الموبايل', 'Phone'))),
         ]),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('إلغاء', 'Cancel'), style: const TextStyle(color: C.mute))),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('حفظ', 'Save'), style: const TextStyle(color: C.ink, fontWeight: FontWeight.w800))),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('إلغاء', 'Cancel'), style: TextStyle(color: C.mute))),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('حفظ', 'Save'), style: TextStyle(color: C.ink, fontWeight: FontWeight.w800))),
         ],
       ),
     );

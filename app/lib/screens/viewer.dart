@@ -207,8 +207,8 @@ class _ViewerScreenState extends State<ViewerScreen> with TickerProviderStateMix
               right: 8,
               top: 4,
               child: Row(children: [
-                IconButton(onPressed: () => Navigator.of(context).pop(), icon: const Icon(Icons.close_rounded, color: C.onNeon)),
-                Expanded(child: Text(p.name.toUpperCase(), textAlign: TextAlign.center, style: const TextStyle(color: C.onNeon, fontWeight: FontWeight.w900, letterSpacing: 2, fontSize: 13))),
+                IconButton(onPressed: () => Navigator.of(context).pop(), icon: Icon(Icons.close_rounded, color: C.onNeon)),
+                Expanded(child: Text(p.name.toUpperCase(), textAlign: TextAlign.center, style: TextStyle(color: C.onNeon, fontWeight: FontWeight.w900, letterSpacing: 2, fontSize: 13))),
                 const SizedBox(width: 48),
               ]),
             ),

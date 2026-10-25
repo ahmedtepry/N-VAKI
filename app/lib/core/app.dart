@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'models.dart';
+import 'theme.dart';
 
 const kSupabaseUrl = String.fromEnvironment('SUPABASE_URL');
 const kSupabaseKey = String.fromEnvironment('SUPABASE_ANON_KEY');
@@ -47,6 +48,7 @@ class App extends ChangeNotifier {
   Future<void> init(SharedPreferences p) async {
     prefs = p;
     lang = p.getString('lang') ?? 'ar';
+    C.apply(p.getString('palette') ?? 'burgundy');
     _loadCart();
     favs.addAll(p.getStringList('favs') ?? const <String>[]);
     db.auth.onAuthStateChange.listen((s) {
@@ -67,10 +69,20 @@ class App extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Owner-chosen colour scheme: remembered on the phone so the app opens in it, refreshed from the server.
+  void setPalette(String key) {
+    if (C.current == key) return;
+    C.apply(key);
+    prefs.setString('palette', key);
+    notifyListeners();
+  }
+
   Future<void> loadSettings() async {
     try {
       final rows = await db.from('app_settings').select();
       settings = {for (final r in rows) r['key'] as String: r['value'] as String};
+      final th = settings['theme'];
+      if (th != null && th != C.current) setPalette(th);
       final cats = await db.from('categories').select().eq('active', true).order('sort');
       categories = cats.map((e) => Map<String, dynamic>.from(e)).toList();
       notifyListeners();

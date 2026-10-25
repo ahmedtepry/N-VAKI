@@ -125,7 +125,7 @@ class _OverviewTabState extends State<OverviewTab> {
       child: ListView(padding: const EdgeInsets.fromLTRB(18, 6, 18, 24), children: [
         Text(tr('أهلاً ${App.i.name}', 'Hi ${App.i.name}'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
         const SizedBox(height: 4),
-        Text(tr('الطلبات والمحادثات بتتوزع تلقائيًا على أقل واحد مشغول في الفريق.', 'Orders and chats are routed automatically to the least-busy teammate.'), style: const TextStyle(color: C.mute, fontSize: 12.5, height: 1.4)),
+        Text(tr('الطلبات والمحادثات بتتوزع تلقائيًا على أقل واحد مشغول في الفريق.', 'Orders and chats are routed automatically to the least-busy teammate.'), style: TextStyle(color: C.mute, fontSize: 12.5, height: 1.4)),
         const SizedBox(height: 16),
         GridView.count(
           crossAxisCount: 2,
@@ -176,7 +176,7 @@ class _OverviewTabState extends State<OverviewTab> {
                   Container(width: 9, height: 9, decoration: BoxDecoration(color: m['online'] == true ? C.ok : C.line, shape: BoxShape.circle)),
                   const SizedBox(width: 10),
                   Expanded(child: Text('${m['full_name']}  ·  ${roleLabel(m['role'])}', style: TextStyle(fontWeight: FontWeight.w700, color: m['is_active'] == true ? C.ink : C.mute))),
-                  Text(tr('طلبات ${m['open_orders']} · محادثات ${m['open_chats']}', 'orders ${m['open_orders']} · chats ${m['open_chats']}'), style: const TextStyle(color: C.mute, fontSize: 11.5)),
+                  Text(tr('طلبات ${m['open_orders']} · محادثات ${m['open_chats']}', 'orders ${m['open_orders']} · chats ${m['open_chats']}'), style: TextStyle(color: C.mute, fontSize: 11.5)),
                 ]),
               ),
           ],
@@ -185,13 +185,13 @@ class _OverviewTabState extends State<OverviewTab> {
     );
   }
 
-  Widget _title(String t) => Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(t.toUpperCase(), style: const TextStyle(fontSize: 11, color: C.mute, letterSpacing: 1.5, fontWeight: FontWeight.w800)));
+  Widget _title(String t) => Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(t.toUpperCase(), style: TextStyle(fontSize: 11, color: C.mute, letterSpacing: 1.5, fontWeight: FontWeight.w800)));
 
   Widget _kpi(String label, String value, IconData icon, {bool neon = false, bool hot = false}) => Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(color: neon ? C.tint : C.card, borderRadius: BorderRadius.circular(14), border: Border.all(color: hot ? C.warn : (neon ? C.ink : C.line), width: hot ? 1.6 : 1)),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Row(children: [Icon(icon, size: 17, color: hot ? C.warn : C.ink), const SizedBox(width: 6), Expanded(child: Text(label, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11.5, color: C.mute, fontWeight: FontWeight.w600)))]),
+          Row(children: [Icon(icon, size: 17, color: hot ? C.warn : C.ink), const SizedBox(width: 6), Expanded(child: Text(label, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11.5, color: C.mute, fontWeight: FontWeight.w600)))]),
           FittedBox(fit: BoxFit.scaleDown, alignment: AlignmentDirectional.centerStart, child: Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900))),
         ]),
       );
@@ -214,7 +214,7 @@ class _WeekPainter extends CustomPainter {
       canvas.drawRRect(r, Paint()..style = PaintingStyle.stroke..strokeWidth = 1..color = C.ink.withValues(alpha: vals[i] > 0 ? 0.9 : 0.2));
       final d = DateTime.tryParse('${week[i]['d']}');
       final label = d == null ? '' : '${d.day}';
-      final tp = TextPainter(text: TextSpan(text: label, style: const TextStyle(fontSize: 10, color: C.mute)), textDirection: TextDirection.ltr)..layout();
+      final tp = TextPainter(text: TextSpan(text: label, style: TextStyle(fontSize: 10, color: C.mute)), textDirection: TextDirection.ltr)..layout();
       tp.paint(canvas, Offset(i * bw + (bw - tp.width) / 2, size.height - tp.height));
     }
   }

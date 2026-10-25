@@ -116,7 +116,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   width: double.infinity,
                   color: C.ink,
                   padding: const EdgeInsets.symmetric(vertical: 7),
-                  child: Text(tr('المتجر مقفول مؤقتًا — تقدر تتصفح بس', 'Store temporarily closed — browsing only'), textAlign: TextAlign.center, style: const TextStyle(color: C.onNeon, fontSize: 12, fontWeight: FontWeight.w700)),
+                  child: Text(tr('المتجر مقفول مؤقتًا — تقدر تتصفح بس', 'Store temporarily closed — browsing only'), textAlign: TextAlign.center, style: TextStyle(color: C.onNeon, fontSize: 12, fontWeight: FontWeight.w700)),
                 ),
               searching ? _searchBar() : _catBar(),
               Expanded(child: _rack(l)),
@@ -181,7 +181,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
             decoration: BoxDecoration(color: C.neon, borderRadius: BorderRadius.circular(6)),
-            child: const Wordmark(size: 13, color: C.onNeon),
+            child: Wordmark(size: 13, color: C.onNeon),
           ),
         ),
         const Spacer(),
@@ -279,10 +279,10 @@ class _HomeScreenState extends State<HomeScreen> {
             Text(p.name.toUpperCase(), textAlign: TextAlign.center, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, letterSpacing: 2)),
             const SizedBox(height: 4),
             Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              Text(money(p.price), style: const TextStyle(fontSize: 12.5, color: C.mute, letterSpacing: 0.6)),
+              Text(money(p.price), style: TextStyle(fontSize: 12.5, color: C.mute, letterSpacing: 0.6)),
               if (p.compareAt != null && p.compareAt! > p.price) ...[
                 const SizedBox(width: 8),
-                Text(money(p.compareAt!), style: const TextStyle(fontSize: 11, color: C.mute, decoration: TextDecoration.lineThrough)),
+                Text(money(p.compareAt!), style: TextStyle(fontSize: 11, color: C.mute, decoration: TextDecoration.lineThrough)),
               ],
             ]),
             const SizedBox(height: 8),

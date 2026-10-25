@@ -93,7 +93,7 @@ class _ChatScreenState extends State<ChatScreen> {
       appBar: AppBar(
         title: Column(mainAxisSize: MainAxisSize.min, children: [
           Text(widget.title ?? (widget.staff ? tr('محادثة عميل', 'CUSTOMER') : tr('خدمة العملاء', 'SUPPORT')), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
-          if (!widget.staff && agent != null) Text(agent, style: const TextStyle(fontSize: 11, color: C.mute, fontWeight: FontWeight.w500)),
+          if (!widget.staff && agent != null) Text(agent, style: TextStyle(fontSize: 11, color: C.mute, fontWeight: FontWeight.w500)),
         ]),
         actions: [if (conv != null && !closed) IconButton(onPressed: _close, tooltip: tr('قفل', 'Close'), icon: const Icon(Icons.done_all_rounded))],
       ),
@@ -116,7 +116,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           ),
                   ),
                   if (closed)
-                    Padding(padding: const EdgeInsets.all(16), child: Text(tr('المحادثة اتقفلت.', 'This conversation is closed.'), style: const TextStyle(color: C.mute)))
+                    Padding(padding: const EdgeInsets.all(16), child: Text(tr('المحادثة اتقفلت.', 'This conversation is closed.'), style: TextStyle(color: C.mute)))
                   else
                     SafeArea(
                       top: false,
@@ -130,11 +130,11 @@ class _ChatScreenState extends State<ChatScreen> {
                               maxLines: 4,
                               textInputAction: TextInputAction.send,
                               onSubmitted: (_) => _send(),
-                              decoration: InputDecoration(hintText: tr('اكتب رسالة...', 'Type a message…'), filled: true, fillColor: C.card, contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10), border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: const BorderSide(color: C.line)), enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: const BorderSide(color: C.line)), focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: const BorderSide(color: C.ink))),
+                              decoration: InputDecoration(hintText: tr('اكتب رسالة...', 'Type a message…'), filled: true, fillColor: C.card, contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10), border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide(color: C.line)), enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide(color: C.line)), focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide(color: C.ink))),
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Material(color: C.neon, shape: const CircleBorder(), child: InkWell(customBorder: const CircleBorder(), onTap: _send, child: const Padding(padding: EdgeInsets.all(12), child: Icon(Icons.arrow_upward_rounded, size: 22, color: C.onNeon)))),
+                          Material(color: C.neon, shape: const CircleBorder(), child: InkWell(customBorder: const CircleBorder(), onTap: _send, child: Padding(padding: EdgeInsets.all(12), child: Icon(Icons.arrow_upward_rounded, size: 22, color: C.onNeon)))),
                         ]),
                       ),
                     ),

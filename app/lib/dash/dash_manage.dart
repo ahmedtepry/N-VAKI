@@ -15,7 +15,7 @@ Widget _card({required Widget child, Color? border}) => Container(
 
 Widget _label(String t) => Padding(
       padding: const EdgeInsets.only(top: 18, bottom: 8),
-      child: Text(t.toUpperCase(), style: const TextStyle(fontSize: 11, color: C.mute, letterSpacing: 1.4, fontWeight: FontWeight.w800)),
+      child: Text(t.toUpperCase(), style: TextStyle(fontSize: 11, color: C.mute, letterSpacing: 1.4, fontWeight: FontWeight.w800)),
     );
 
 Switch _sw(bool v, ValueChanged<bool> f) => Switch(value: v, activeColor: C.onNeon, activeTrackColor: C.neon, onChanged: f);
@@ -29,7 +29,7 @@ Future<String?> _ask(BuildContext context, String title, {String hint = '', Stri
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
       content: TextField(controller: c, autofocus: true, keyboardType: type, decoration: InputDecoration(hintText: hint)),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: Text(tr('إلغاء', 'Cancel'), style: const TextStyle(color: C.mute))),
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(tr('إلغاء', 'Cancel'), style: TextStyle(color: C.mute))),
         TextButton(onPressed: () => Navigator.pop(context, c.text.trim()), child: Text(tr('حفظ', 'Save'), style: const TextStyle(fontWeight: FontWeight.w900))),
       ],
     ),
@@ -160,7 +160,7 @@ class _TeamTabState extends State<TeamTab> {
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(tr('ضيف عضو للفريق', 'ADD A TEAMMATE'), style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.3, fontSize: 12)),
             const SizedBox(height: 4),
-            Text(tr('لازم يكون عمل حساب في التطبيق الأول، وبعدين اكتب إيميله هنا. بتتحدد له صلاحيات حسب الدور، وبعدها تعدّلها زي ما تحب.', 'They must create an account first, then enter their email. They get the role preset, then you can fine-tune it.'), style: const TextStyle(color: C.mute, fontSize: 12, height: 1.4)),
+            Text(tr('لازم يكون عمل حساب في التطبيق الأول، وبعدين اكتب إيميله هنا. بتتحدد له صلاحيات حسب الدور، وبعدها تعدّلها زي ما تحب.', 'They must create an account first, then enter their email. They get the role preset, then you can fine-tune it.'), style: TextStyle(color: C.mute, fontSize: 12, height: 1.4)),
             TextField(controller: email, keyboardType: TextInputType.emailAddress, textDirection: TextDirection.ltr, decoration: InputDecoration(labelText: tr('إيميل العضو', 'Teammate email'))),
             const SizedBox(height: 12),
             _chips(role, (r) => setState(() => role = r)),
@@ -188,8 +188,8 @@ class _TeamTabState extends State<TeamTab> {
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text('${m['full_name']}', style: TextStyle(fontWeight: FontWeight.w800, color: m['is_active'] == true ? C.ink : C.mute)),
-                Text('${roleLabel(m['role'])}  ·  ${m['email'] ?? ''}', style: const TextStyle(fontSize: 11.5, color: C.mute)),
-                Text(isOwner ? tr('كل الصلاحيات', 'All permissions') : tr('${perms.length} صلاحية · طلبات ${m['open_orders']} · محادثات ${m['open_chats']}', '${perms.length} permissions · orders ${m['open_orders']} · chats ${m['open_chats']}'), style: const TextStyle(fontSize: 11, color: C.mute)),
+                Text('${roleLabel(m['role'])}  ·  ${m['email'] ?? ''}', style: TextStyle(fontSize: 11.5, color: C.mute)),
+                Text(isOwner ? tr('كل الصلاحيات', 'All permissions') : tr('${perms.length} صلاحية · طلبات ${m['open_orders']} · محادثات ${m['open_chats']}', '${perms.length} permissions · orders ${m['open_orders']} · chats ${m['open_chats']}'), style: TextStyle(fontSize: 11, color: C.mute)),
               ]),
             ),
             if (!isOwner) _sw(m['is_active'] == true, (v) => _active(m, v)),
@@ -198,7 +198,7 @@ class _TeamTabState extends State<TeamTab> {
         ),
         if (expanded) ...[
           const Divider(height: 22),
-          Text(tr('الدور الجاهز (بيرجّع الصلاحيات للافتراضي)', 'Role preset (resets permissions to default)'), style: const TextStyle(fontSize: 11.5, color: C.mute)),
+          Text(tr('الدور الجاهز (بيرجّع الصلاحيات للافتراضي)', 'Role preset (resets permissions to default)'), style: TextStyle(fontSize: 11.5, color: C.mute)),
           const SizedBox(height: 8),
           _chips('${m['role']}', (r) => _preset(m, r)),
           const SizedBox(height: 12),
@@ -210,7 +210,7 @@ class _TeamTabState extends State<TeamTab> {
               activeTrackColor: C.neon,
               secondary: Icon(p.icon, size: 20, color: C.ink),
               title: Text(tr(p.ar, p.en), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
-              subtitle: Text(tr(p.hintAr, p.hintEn), style: const TextStyle(fontSize: 11.5, color: C.mute)),
+              subtitle: Text(tr(p.hintAr, p.hintEn), style: TextStyle(fontSize: 11.5, color: C.mute)),
               value: perms.contains(p.key),
               onChanged: (v) => _perm(m, p.key, v),
             ),
@@ -300,7 +300,7 @@ class _CustomersTabState extends State<CustomersTab> {
                                 Expanded(
                                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                     Text('${c['full_name']}', style: TextStyle(fontWeight: FontWeight.w800, color: active ? C.ink : C.mute)),
-                                    Text('${c['email'] ?? ''}${(c['phone'] ?? '').toString().isEmpty ? '' : '  ·  ${c['phone']}'}', style: const TextStyle(fontSize: 11.5, color: C.mute)),
+                                    Text('${c['email'] ?? ''}${(c['phone'] ?? '').toString().isEmpty ? '' : '  ·  ${c['phone']}'}', style: TextStyle(fontSize: 11.5, color: C.mute)),
                                     const SizedBox(height: 2),
                                     Text(tr('${c['orders']} طلب · ${money(toD(c['spent']))}', '${c['orders']} orders · ${money(toD(c['spent']))}'), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
                                   ]),
@@ -416,7 +416,7 @@ class _CouponsTabState extends State<CouponsTab> {
                                     tr('استُخدم ${c['used']}${toI(c['max_uses']) > 0 ? ' / ${c['max_uses']}' : ''}', 'used ${c['used']}${toI(c['max_uses']) > 0 ? ' / ${c['max_uses']}' : ''}'),
                                     if (exp != null) tr('ينتهي ${exp.day}/${exp.month}', 'ends ${exp.day}/${exp.month}'),
                                   ].join(' · '),
-                                  style: const TextStyle(fontSize: 11.5, color: C.mute),
+                                  style: TextStyle(fontSize: 11.5, color: C.mute),
                                 ),
                               ]),
                             ),
@@ -571,6 +571,40 @@ class _SettingsTabState extends State<SettingsTab> {
           _sw(open, (v) => setState(() => open = v)),
         ]),
       ),
+      if (App.i.can('settings_edit')) ...[
+        _label(tr('ألوان التطبيق (بتتغير عند كل العملاء)', 'App colours (changes for every customer)')),
+        SizedBox(
+          height: 108,
+          child: ListView(scrollDirection: Axis.horizontal, children: [
+            for (final p in kPalettes)
+              GestureDetector(
+                onTap: () async {
+                  try {
+                    await Api.saveSetting('theme', p.key);
+                    App.i.setPalette(p.key);
+                    toast(tr('اتغيّر اللون ✓', 'Colours updated ✓'));
+                  } catch (e) {
+                    toastError(e);
+                  }
+                },
+                child: Container(
+                  width: 96,
+                  margin: const EdgeInsetsDirectional.only(end: 10),
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(color: p.bg, borderRadius: BorderRadius.circular(14), border: Border.all(color: C.current == p.key ? C.ink : C.line, width: C.current == p.key ? 2.2 : 1)),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Row(children: [
+                      for (final c in [p.neon, p.tint, p.card, p.ink]) Container(width: 16, height: 16, margin: const EdgeInsetsDirectional.only(end: 3), decoration: BoxDecoration(color: c, shape: BoxShape.circle, border: Border.all(color: p.line))),
+                    ]),
+                    const Spacer(),
+                    Text(tr(p.ar, p.en), style: TextStyle(color: p.ink, fontWeight: FontWeight.w800, fontSize: 12)),
+                    if (C.current == p.key) Icon(Icons.check_circle, size: 16, color: p.neon),
+                  ]),
+                ),
+              ),
+          ]),
+        ),
+      ],
       if (App.i.can('categories_edit') || App.i.can('sizes_edit')) ...[
         _label(tr('الكتالوج', 'Catalog')),
         if (App.i.can('categories_edit')) _link(Icons.category_outlined, tr('الأقسام', 'Categories'), const CategoriesScreen()),
@@ -596,7 +630,7 @@ class _SettingsTabState extends State<SettingsTab> {
   Widget _link(IconData i, String t, Widget page) => _card(
         child: InkWell(
           onTap: () => Navigator.of(context).push(fadeRoute(page)),
-          child: Row(children: [Icon(i, color: C.ink), const SizedBox(width: 12), Expanded(child: Text(t, style: const TextStyle(fontWeight: FontWeight.w800))), const Icon(Icons.chevron_right_rounded, color: C.mute)]),
+          child: Row(children: [Icon(i, color: C.ink), const SizedBox(width: 12), Expanded(child: Text(t, style: const TextStyle(fontWeight: FontWeight.w800))), Icon(Icons.chevron_right_rounded, color: C.mute)]),
         ),
       );
 }
@@ -722,7 +756,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                             onTap: () => _rename(c),
                             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                               Text(tr('${c['name_ar']}', '${c['name_en']}'), style: TextStyle(fontWeight: FontWeight.w800, color: c['active'] == true ? C.ink : C.mute)),
-                              Text('${c['name_ar']} · ${c['name_en']}  (${c['slug']})', style: const TextStyle(fontSize: 11, color: C.mute)),
+                              Text('${c['name_ar']} · ${c['name_en']}  (${c['slug']})', style: TextStyle(fontSize: 11, color: C.mute)),
                             ]),
                           ),
                         ),

@@ -89,8 +89,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                               Expanded(
                                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                   Text(App.i.ar ? r['title_ar'] : r['title_en'], style: TextStyle(fontWeight: unread ? FontWeight.w900 : FontWeight.w600)),
-                                  if (body.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 2), child: Text(body, style: const TextStyle(color: C.mute, fontSize: 13, height: 1.4))),
-                                  Padding(padding: const EdgeInsets.only(top: 4), child: Text(fmtAgo(r['created_at']), style: const TextStyle(color: C.mute, fontSize: 10.5))),
+                                  if (body.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 2), child: Text(body, style: TextStyle(color: C.mute, fontSize: 13, height: 1.4))),
+                                  Padding(padding: const EdgeInsets.only(top: 4), child: Text(fmtAgo(r['created_at']), style: TextStyle(color: C.mute, fontSize: 10.5))),
                                 ]),
                               ),
                             ]),

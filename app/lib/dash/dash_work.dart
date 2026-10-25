@@ -139,7 +139,7 @@ class _OrdersTabState extends State<OrdersTab> {
                                   Text(who == null ? tr('بدون مسؤول', 'Unassigned') : '${who['full_name']}', style: TextStyle(fontSize: 12, color: who == null ? C.warn : C.mute)),
                                 ]),
                                 const SizedBox(height: 4),
-                                Text(fmtAgo(o['created_at']), style: const TextStyle(fontSize: 10.5, color: C.mute)),
+                                Text(fmtAgo(o['created_at']), style: TextStyle(fontSize: 10.5, color: C.mute)),
                               ]),
                             ),
                           );
@@ -229,7 +229,7 @@ class _OrderManageScreenState extends State<OrderManageScreen> {
         if (method == 'wallet') ...[
           const SizedBox(height: 8),
           Text(tr('المطلوب ${money(toD(d['total']))} على محفظة ${App.i.walletNumber}', 'Expected ${money(toD(d['total']))} on wallet ${App.i.walletNumber}'), style: const TextStyle(height: 1.4, fontSize: 12.5)),
-          if ((d['wallet_ref'] ?? '').toString().isNotEmpty) Text(tr('حوّل من: ${d['wallet_ref']}', 'Sent from: ${d['wallet_ref']}'), textDirection: TextDirection.ltr, style: const TextStyle(color: C.mute, fontSize: 12)),
+          if ((d['wallet_ref'] ?? '').toString().isNotEmpty) Text(tr('حوّل من: ${d['wallet_ref']}', 'Sent from: ${d['wallet_ref']}'), textDirection: TextDirection.ltr, style: TextStyle(color: C.mute, fontSize: 12)),
           if (st != 'paid' && d['status'] != 'cancelled' && App.i.can('orders_manage')) ...[
             const SizedBox(height: 10),
             NeonButton(tr('تأكيد استلام الدفع', 'Confirm payment received'), icon: Icons.verified_outlined, loading: busy, onPressed: busy ? null : () async {
@@ -287,7 +287,7 @@ class _OrderManageScreenState extends State<OrderManageScreen> {
         child: ListView(shrinkWrap: true, padding: const EdgeInsets.all(16), children: [
           Text(tr('اختار السائق', 'Choose a driver'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
           const SizedBox(height: 8),
-          if (drivers.isEmpty) Padding(padding: const EdgeInsets.all(12), child: Text(tr('مفيش سواقين. فعّل صلاحية "سائق توصيل" لأي عضو من تبويب الفريق.', 'No drivers yet. Turn on the "Delivery driver" permission for a team member.'), style: const TextStyle(color: C.mute, height: 1.4))),
+          if (drivers.isEmpty) Padding(padding: const EdgeInsets.all(12), child: Text(tr('مفيش سواقين. فعّل صلاحية "سائق توصيل" لأي عضو من تبويب الفريق.', 'No drivers yet. Turn on the "Delivery driver" permission for a team member.'), style: TextStyle(color: C.mute, height: 1.4))),
           for (final x in drivers)
             ListTile(
               leading: Container(width: 10, height: 10, decoration: BoxDecoration(color: x['online'] == true ? C.ok : C.line, shape: BoxShape.circle)),
@@ -322,7 +322,7 @@ class _OrderManageScreenState extends State<OrderManageScreen> {
           title: Text(tr('إلغاء الطلب؟', 'Cancel order?')),
           content: TextField(controller: c, decoration: InputDecoration(labelText: tr('السبب (بيوصل للعميل)', 'Reason (sent to customer)'))),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('رجوع', 'Back'), style: const TextStyle(color: C.mute))),
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('رجوع', 'Back'), style: TextStyle(color: C.mute))),
             TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('إلغاء الطلب', 'Cancel order'), style: const TextStyle(color: C.danger, fontWeight: FontWeight.w800))),
           ],
         ),
@@ -354,7 +354,7 @@ class _OrderManageScreenState extends State<OrderManageScreen> {
           : d == null
               ? const Loading()
               : ListView(padding: const EdgeInsets.fromLTRB(20, 4, 20, 30), children: [
-                  Row(children: [StatusChip(statusLabel(d['status']), statusColor(d['status'])), const Spacer(), Text(fmtDate(d['created_at']), style: const TextStyle(color: C.mute, fontSize: 11))]),
+                  Row(children: [StatusChip(statusLabel(d['status']), statusColor(d['status'])), const Spacer(), Text(fmtDate(d['created_at']), style: TextStyle(color: C.mute, fontSize: 11))]),
                   const SizedBox(height: 14),
                   Container(
                     padding: const EdgeInsets.all(14),
@@ -363,7 +363,7 @@ class _OrderManageScreenState extends State<OrderManageScreen> {
                       Text(d['customer_name'], style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
                       const SizedBox(height: 4),
                       Text('${d['city']} - ${d['address']}', style: const TextStyle(height: 1.4)),
-                      if ((d['notes'] ?? '').toString().isNotEmpty) Padding(padding: const EdgeInsets.only(top: 6), child: Text('📝 ${d['notes']}', style: const TextStyle(color: C.mute))),
+                      if ((d['notes'] ?? '').toString().isNotEmpty) Padding(padding: const EdgeInsets.only(top: 6), child: Text('📝 ${d['notes']}', style: TextStyle(color: C.mute))),
                       const SizedBox(height: 10),
                       Row(children: [
                         Expanded(child: NeonButton(tr('اتصال', 'Call'), icon: Icons.call_outlined, outline: true, onPressed: () => openUrl('tel:${d['phone']}'))),
@@ -371,7 +371,7 @@ class _OrderManageScreenState extends State<OrderManageScreen> {
                         Expanded(child: NeonButton('WhatsApp', icon: Icons.chat_outlined, outline: true, onPressed: () => openUrl('https://wa.me/${waNumber(d['phone'])}'))),
                       ]),
                       const SizedBox(height: 6),
-                      Text('${d['phone']}', textDirection: TextDirection.ltr, style: const TextStyle(color: C.mute, fontSize: 12)),
+                      Text('${d['phone']}', textDirection: TextDirection.ltr, style: TextStyle(color: C.mute, fontSize: 12)),
                     ]),
                   ),
                   _paymentPanel(d),
@@ -386,7 +386,7 @@ class _OrderManageScreenState extends State<OrderManageScreen> {
                         const SizedBox(width: 12),
                         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                           Text(tr(it['name_ar'], it['name_en']), style: const TextStyle(fontWeight: FontWeight.w800)),
-                          Text('${tr(it['color_name_ar'], it['color_name_en'])} · ${it['size']} · x${it['qty']}', style: const TextStyle(color: C.mute, fontSize: 12)),
+                          Text('${tr(it['color_name_ar'], it['color_name_en'])} · ${it['size']} · x${it['qty']}', style: TextStyle(color: C.mute, fontSize: 12)),
                         ])),
                         Text(money(toD(it['unit_price']) * toI(it['qty'])), style: const TextStyle(fontWeight: FontWeight.w700)),
                       ]),
@@ -394,7 +394,7 @@ class _OrderManageScreenState extends State<OrderManageScreen> {
                   const Divider(height: 26),
                   Row(children: [Text(tr('الإجمالي', 'Total'), style: const TextStyle(fontWeight: FontWeight.w900)), const Spacer(), Text(money(toD(d['total'])), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17))]),
                   const SizedBox(height: 4),
-                  Text(tr('المسؤول: ${people[d['assigned_to']]?['full_name'] ?? 'لسه محدش'}', 'Owner: ${people[d['assigned_to']]?['full_name'] ?? 'nobody yet'}'), style: const TextStyle(color: C.mute, fontSize: 12)),
+                  Text(tr('المسؤول: ${people[d['assigned_to']]?['full_name'] ?? 'لسه محدش'}', 'Owner: ${people[d['assigned_to']]?['full_name'] ?? 'nobody yet'}'), style: TextStyle(color: C.mute, fontSize: 12)),
                   const SizedBox(height: 12),
                   if (App.i.can('orders_view'))
                     NeonButton(tr('فاتورة / أمر تجهيز PDF', 'Prep sheet / invoice PDF'), icon: Icons.picture_as_pdf_outlined, outline: true, onPressed: () => shareInvoice(d, staff: true, driverName: people[d['driver_id']]?['full_name'])),
@@ -407,7 +407,7 @@ class _OrderManageScreenState extends State<OrderManageScreen> {
                       ),
                   if (history.isNotEmpty) ...[
                     const SizedBox(height: 14),
-                    Text(tr('سجل الطلب', 'HISTORY'), style: const TextStyle(fontSize: 11, color: C.mute, letterSpacing: 1.4)),
+                    Text(tr('سجل الطلب', 'HISTORY'), style: TextStyle(fontSize: 11, color: C.mute, letterSpacing: 1.4)),
                     const SizedBox(height: 6),
                     for (final h in history.reversed)
                       Padding(
@@ -417,9 +417,9 @@ class _OrderManageScreenState extends State<OrderManageScreen> {
                           const SizedBox(width: 10),
                           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                             Text('${statusLabel(h['status'])}${people[h['changed_by']] != null ? '  ·  ${people[h['changed_by']]!['full_name']}' : ''}', style: const TextStyle(fontWeight: FontWeight.w700)),
-                            if ((h['note'] ?? '').toString().isNotEmpty && h['note'] != 'customer') Text('${h['note']}', style: const TextStyle(color: C.mute, fontSize: 12)),
+                            if ((h['note'] ?? '').toString().isNotEmpty && h['note'] != 'customer') Text('${h['note']}', style: TextStyle(color: C.mute, fontSize: 12)),
                           ])),
-                          Text(fmtDate(h['created_at']), style: const TextStyle(color: C.mute, fontSize: 10.5)),
+                          Text(fmtDate(h['created_at']), style: TextStyle(color: C.mute, fontSize: 10.5)),
                         ]),
                       ),
                   ],
@@ -535,9 +535,9 @@ class _InboxTabState extends State<InboxTab> {
                             contentPadding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
                             leading: Container(width: 42, height: 42, alignment: Alignment.center, decoration: BoxDecoration(color: unread > 0 ? C.tint : C.card, shape: BoxShape.circle, border: Border.all(color: unread > 0 ? C.ink : C.line)), child: Text(name.characters.first.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.w900))),
                             title: Text(name, style: TextStyle(fontWeight: unread > 0 ? FontWeight.w900 : FontWeight.w700)),
-                            subtitle: Text('${(c['subject'] ?? '').toString().isEmpty ? tr('استفسار', 'Inquiry') : c['subject']}  ·  ${c['agent_name'] ?? tr('بدون مسؤول', 'unassigned')}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: C.mute)),
+                            subtitle: Text('${(c['subject'] ?? '').toString().isEmpty ? tr('استفسار', 'Inquiry') : c['subject']}  ·  ${c['agent_name'] ?? tr('بدون مسؤول', 'unassigned')}', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12, color: C.mute)),
                             trailing: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [
-                              Text(fmtAgo(c['last_message_at']), style: const TextStyle(fontSize: 10.5, color: C.mute)),
+                              Text(fmtAgo(c['last_message_at']), style: TextStyle(fontSize: 10.5, color: C.mute)),
                               if (unread > 0) Padding(padding: const EdgeInsets.only(top: 4), child: Badge2(0, Container(padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2), decoration: BoxDecoration(color: C.ink, borderRadius: BorderRadius.circular(10)), child: Text('$unread', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900)))))
                             ]),
                             onTap: () => Navigator.of(context).push(fadeRoute(ChatScreen(convId: c['id'], staff: true, title: name))),
@@ -620,7 +620,7 @@ class _DeliveriesTabState extends State<DeliveriesTab> {
                   StatusChip(statusLabel(o['status']), statusColor(o['status'])),
                 ]),
                 const SizedBox(height: 6),
-                Text('${o['city']} - ${o['address']}', style: const TextStyle(color: C.mute, height: 1.35)),
+                Text('${o['city']} - ${o['address']}', style: TextStyle(color: C.mute, height: 1.35)),
                 const SizedBox(height: 6),
                 Row(children: [
                   Text(money(toD(o['total'])), style: const TextStyle(fontWeight: FontWeight.w800)),

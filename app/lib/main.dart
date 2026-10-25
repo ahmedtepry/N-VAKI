@@ -18,7 +18,7 @@ Future<void> main() async {
   runApp(const NovakiApp());
 }
 
-final _themes = <bool, ThemeData>{};
+final _themes = <String, ThemeData>{};
 
 class NovakiApp extends StatelessWidget {
   const NovakiApp();
@@ -35,9 +35,9 @@ class NovakiApp extends StatelessWidget {
           locale: Locale(App.i.lang),
           supportedLocales: const [Locale('ar'), Locale('en')],
           localizationsDelegates: const [GlobalMaterialLocalizations.delegate, GlobalWidgetsLocalizations.delegate, GlobalCupertinoLocalizations.delegate],
-          theme: _themes.putIfAbsent(ar, () => buildTheme(ar)),
+          theme: _themes.putIfAbsent('${C.current}-$ar', () => buildTheme(ar)),
           // a language switch rebuilds the whole tree so every tr() string refreshes
-          builder: (context, child) => KeyedSubtree(key: ValueKey(App.i.lang), child: child ?? const SizedBox()),
+          builder: (context, child) => KeyedSubtree(key: ValueKey('${App.i.lang}-${C.current}'), child: child ?? const SizedBox()),
           home: const SplashScreen(),
         );
       },

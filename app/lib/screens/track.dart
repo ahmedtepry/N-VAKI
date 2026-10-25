@@ -144,7 +144,7 @@ class _GuestTrackScreenState extends State<GuestTrackScreen> {
               timeline: (r['timeline'] as List).map((e) => Json.from(e)).toList(),
             )
           : ListView(padding: const EdgeInsets.fromLTRB(24, 12, 24, 30), children: [
-              Text(tr('اكتب رقم الطلب ورقم الموبايل اللي طلبت بيه.', 'Enter your order number and the phone number used on the order.'), style: const TextStyle(color: C.mute, height: 1.5)),
+              Text(tr('اكتب رقم الطلب ورقم الموبايل اللي طلبت بيه.', 'Enter your order number and the phone number used on the order.'), style: TextStyle(color: C.mute, height: 1.5)),
               const SizedBox(height: 10),
               TextField(controller: no, keyboardType: TextInputType.number, textDirection: TextDirection.ltr, decoration: InputDecoration(labelText: tr('رقم الطلب (مثلاً 1001)', 'Order number (e.g. 1001)'))),
               TextField(controller: phone, keyboardType: TextInputType.phone, textDirection: TextDirection.ltr, decoration: InputDecoration(labelText: tr('رقم الموبايل', 'Phone number'))),
@@ -222,9 +222,9 @@ class _TrackBodyState extends State<TrackBody> {
                 alignment: Alignment.center,
                 padding: const EdgeInsets.all(24),
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  const Icon(Icons.location_off_outlined, size: 34, color: C.mute),
+                  Icon(Icons.location_off_outlined, size: 34, color: C.mute),
                   const SizedBox(height: 8),
-                  Text(tr('الموقع على الخريطة مش متحدد لهذا الطلب.', 'No map location was set for this order.'), textAlign: TextAlign.center, style: const TextStyle(color: C.mute)),
+                  Text(tr('الموقع على الخريطة مش متحدد لهذا الطلب.', 'No map location was set for this order.'), textAlign: TextAlign.center, style: TextStyle(color: C.mute)),
                 ]),
               )
             : FlutterMap(
@@ -242,7 +242,7 @@ class _TrackBodyState extends State<TrackBody> {
                   TileLayer(urlTemplate: kTiles, userAgentPackageName: 'com.novaki.app'),
                   if (dest != null && courier != null) PolylineLayer(polylines: [Polyline(points: [courier, dest], strokeWidth: 3.5, color: C.neon.withValues(alpha: 0.7), pattern: StrokePattern.dashed(segments: const [8, 8]))]),
                   MarkerLayer(markers: [
-                    if (dest != null) Marker(point: dest, width: 46, height: 52, alignment: Alignment.topCenter, child: const Icon(Icons.location_on, size: 46, color: C.neon)),
+                    if (dest != null) Marker(point: dest, width: 46, height: 52, alignment: Alignment.topCenter, child: Icon(Icons.location_on, size: 46, color: C.neon)),
                     if (courier != null)
                       Marker(
                         point: courier,
@@ -250,7 +250,7 @@ class _TrackBodyState extends State<TrackBody> {
                         height: 44,
                         child: Container(
                           decoration: BoxDecoration(color: C.ink, shape: BoxShape.circle, border: Border.all(color: C.onNeon, width: 2.5), boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 8)]),
-                          child: const Icon(Icons.two_wheeler_rounded, color: C.onNeon, size: 22),
+                          child: Icon(Icons.two_wheeler_rounded, color: C.onNeon, size: 22),
                         ),
                       ),
                   ]),
@@ -264,7 +264,7 @@ class _TrackBodyState extends State<TrackBody> {
           Row(children: [
             StatusChip(statusLabel(status), statusColor(status)),
             const Spacer(),
-            if (o['created_at'] != null) Text(fmtDate('${o['created_at']}'), style: const TextStyle(color: C.mute, fontSize: 11)),
+            if (o['created_at'] != null) Text(fmtDate('${o['created_at']}'), style: TextStyle(color: C.mute, fontSize: 11)),
           ]),
           if (status == 'shipped') ...[
             const SizedBox(height: 14),
@@ -272,7 +272,7 @@ class _TrackBodyState extends State<TrackBody> {
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(color: C.card, borderRadius: BorderRadius.circular(14), border: Border.all(color: C.ink)),
               child: Row(children: [
-                Container(width: 44, height: 44, decoration: const BoxDecoration(color: C.ink, shape: BoxShape.circle), child: const Icon(Icons.two_wheeler_rounded, color: C.onNeon)),
+                Container(width: 44, height: 44, decoration: BoxDecoration(color: C.ink, shape: BoxShape.circle), child: Icon(Icons.two_wheeler_rounded, color: C.onNeon)),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -282,15 +282,15 @@ class _TrackBodyState extends State<TrackBody> {
                       if (name.isNotEmpty) name,
                       if (km != null) tr('${km.toStringAsFixed(1)} كم', '${km.toStringAsFixed(1)} km away'),
                       if (courier == null) tr('بنستنى مشاركة موقع المندوب', 'waiting for the courier location'),
-                    ].join(' · '), style: const TextStyle(color: C.mute, fontSize: 12)),
+                    ].join(' · '), style: TextStyle(color: C.mute, fontSize: 12)),
                   ]),
                 ),
-                if (cphone.isNotEmpty) IconButton.filled(style: IconButton.styleFrom(backgroundColor: C.neon), onPressed: () => openUrl('tel:$cphone'), icon: const Icon(Icons.call_rounded, color: C.onNeon)),
+                if (cphone.isNotEmpty) IconButton.filled(style: IconButton.styleFrom(backgroundColor: C.neon), onPressed: () => openUrl('tel:$cphone'), icon: Icon(Icons.call_rounded, color: C.onNeon)),
               ]),
             ),
           ],
           const SizedBox(height: 22),
-          Text(tr('مراحل الطلب', 'ORDER PROGRESS'), style: const TextStyle(fontSize: 11, color: C.mute, letterSpacing: 1.4, fontWeight: FontWeight.w800)),
+          Text(tr('مراحل الطلب', 'ORDER PROGRESS'), style: TextStyle(fontSize: 11, color: C.mute, letterSpacing: 1.4, fontWeight: FontWeight.w800)),
           const SizedBox(height: 10),
           if (cancelled)
             Row(children: [const Icon(Icons.cancel_outlined, color: C.danger), const SizedBox(width: 10), Text(tr('الطلب اتلغى', 'This order was cancelled'), style: const TextStyle(fontWeight: FontWeight.w800, color: C.danger))])
@@ -303,7 +303,7 @@ class _TrackBodyState extends State<TrackBody> {
                       width: 22,
                       height: 22,
                       decoration: BoxDecoration(color: i <= at ? C.neon : Colors.transparent, shape: BoxShape.circle, border: Border.all(color: i <= at ? C.neon : C.line, width: 1.6)),
-                      child: i <= at ? const Icon(Icons.check_rounded, size: 14, color: C.onNeon) : null,
+                      child: i <= at ? Icon(Icons.check_rounded, size: 14, color: C.onNeon) : null,
                     ),
                     if (i < _steps.length - 1) Expanded(child: Container(width: 2, color: i < at ? C.neon : C.line)),
                   ]),
@@ -313,7 +313,7 @@ class _TrackBodyState extends State<TrackBody> {
                       padding: const EdgeInsets.only(bottom: 16),
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Text(stepLabel(_steps[i]), style: TextStyle(fontWeight: i == at ? FontWeight.w900 : FontWeight.w600, color: i <= at ? C.ink : C.mute)),
-                        if (timeOf(_steps[i]) != null) Text(timeOf(_steps[i])!, style: const TextStyle(fontSize: 11.5, color: C.mute)),
+                        if (timeOf(_steps[i]) != null) Text(timeOf(_steps[i])!, style: TextStyle(fontSize: 11.5, color: C.mute)),
                       ]),
                     ),
                   ),
@@ -321,7 +321,7 @@ class _TrackBodyState extends State<TrackBody> {
               ),
           if (notes.isNotEmpty) ...[
             const SizedBox(height: 6),
-            Text(tr('رسائل من الفريق', 'MESSAGES FROM THE TEAM'), style: const TextStyle(fontSize: 11, color: C.mute, letterSpacing: 1.4, fontWeight: FontWeight.w800)),
+            Text(tr('رسائل من الفريق', 'MESSAGES FROM THE TEAM'), style: TextStyle(fontSize: 11, color: C.mute, letterSpacing: 1.4, fontWeight: FontWeight.w800)),
             const SizedBox(height: 8),
             for (final n in notes.reversed)
               Container(
@@ -331,7 +331,7 @@ class _TrackBodyState extends State<TrackBody> {
                 decoration: BoxDecoration(color: C.tint.withValues(alpha: 0.6), borderRadius: BorderRadius.circular(12)),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text('${n['note']}', style: const TextStyle(height: 1.4)),
-                  if (n['at'] != null) Text(fmtDate('${n['at']}'), style: const TextStyle(fontSize: 11, color: C.mute)),
+                  if (n['at'] != null) Text(fmtDate('${n['at']}'), style: TextStyle(fontSize: 11, color: C.mute)),
                 ]),
               ),
           ],
@@ -432,7 +432,7 @@ class _DeliveryPanelState extends State<DeliveryPanel> {
             activeColor: C.onNeon,
             activeTrackColor: C.neon,
             title: Text(tr('شارك موقعي مع العميل', 'Share my live location'), style: const TextStyle(fontWeight: FontWeight.w800)),
-            subtitle: Text(sharing ? (lastSent == null ? tr('بيجيب الموقع...', 'Getting location…') : tr('آخر إرسال ${lastSent!.hour}:${lastSent!.minute.toString().padLeft(2, '0')}', 'Last sent ${lastSent!.hour}:${lastSent!.minute.toString().padLeft(2, '0')}')) : tr('سيب الشاشة دي مفتوحة وإنت بتوصّل', 'Keep this screen open while delivering'), style: const TextStyle(fontSize: 12, color: C.mute)),
+            subtitle: Text(sharing ? (lastSent == null ? tr('بيجيب الموقع...', 'Getting location…') : tr('آخر إرسال ${lastSent!.hour}:${lastSent!.minute.toString().padLeft(2, '0')}', 'Last sent ${lastSent!.hour}:${lastSent!.minute.toString().padLeft(2, '0')}')) : tr('سيب الشاشة دي مفتوحة وإنت بتوصّل', 'Keep this screen open while delivering'), style: TextStyle(fontSize: 12, color: C.mute)),
             value: sharing,
             onChanged: _toggle,
           ),
@@ -441,7 +441,7 @@ class _DeliveryPanelState extends State<DeliveryPanel> {
           const SizedBox(height: 6),
           Row(children: [
             Expanded(child: TextField(controller: msg, decoration: InputDecoration(hintText: tr('رسالة للعميل (مثلاً: المندوب هيوصل بعد ساعة)', 'Message to the customer'), isDense: true))),
-            IconButton(onPressed: posting ? null : _post, icon: const Icon(Icons.send_rounded, color: C.neon)),
+            IconButton(onPressed: posting ? null : _post, icon: Icon(Icons.send_rounded, color: C.neon)),
           ]),
         ],
       ]),

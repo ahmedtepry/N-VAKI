@@ -78,7 +78,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                     alignment: AlignmentDirectional.centerEnd,
                     child: TextButton(
                       onPressed: () => App.i.setLang(App.i.ar ? 'en' : 'ar'),
-                      child: Text(App.i.ar ? 'EN' : 'عربي', style: const TextStyle(color: C.ink, fontWeight: FontWeight.w800, letterSpacing: 1)),
+                      child: Text(App.i.ar ? 'EN' : 'عربي', style: TextStyle(color: C.ink, fontWeight: FontWeight.w800, letterSpacing: 1)),
                     ),
                   ),
                   Center(child: Container(width: 170, height: 2, color: C.ink)),
@@ -100,7 +100,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                   Center(
                     child: Text(
                       register ? tr('اعمل حسابك وابدأ', 'Create your account') : tr('أهلاً بيك تاني', 'Welcome back'),
-                      style: const TextStyle(color: C.mute, letterSpacing: 0.6),
+                      style: TextStyle(color: C.mute, letterSpacing: 0.6),
                     ),
                   ),
                   const SizedBox(height: 22),
@@ -145,13 +145,13 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                     onPressed: busy ? null : () => setState(() => register = !register),
                     child: Text(
                       register ? tr('عندي حساب بالفعل', 'I already have an account') : tr('مفيش عندي حساب؟ سجّل دلوقتي', 'New here? Create an account'),
-                      style: const TextStyle(color: C.ink, fontWeight: FontWeight.w700),
+                      style: TextStyle(color: C.ink, fontWeight: FontWeight.w700),
                     ),
                   ),
                   TextButton.icon(
                     onPressed: busy ? null : () => Navigator.of(context).push(fadeRoute(const GuestTrackScreen())),
-                    icon: const Icon(Icons.local_shipping_outlined, size: 18, color: C.mute),
-                    label: Text(tr('تتبّع طلب من غير حساب', 'Track an order without an account'), style: const TextStyle(color: C.mute, fontWeight: FontWeight.w600)),
+                    icon: Icon(Icons.local_shipping_outlined, size: 18, color: C.mute),
+                    label: Text(tr('تتبّع طلب من غير حساب', 'Track an order without an account'), style: TextStyle(color: C.mute, fontWeight: FontWeight.w600)),
                   ),
                 ]),
               ),

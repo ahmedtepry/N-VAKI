@@ -45,12 +45,12 @@ void toastError(Object e) => toast(friendly(e));
 
 class Wordmark extends StatelessWidget {
   final double size;
-  final Color color;
-  const Wordmark({this.size = 20, this.color = C.ink});
+  final Color? color;
+  const Wordmark({this.size = 20, this.color});
   @override
   Widget build(BuildContext context) => Text(
         kBrand,
-        style: TextStyle(fontSize: size, fontWeight: FontWeight.w900, letterSpacing: size * 0.18, color: color, height: 1),
+        style: TextStyle(fontSize: size, fontWeight: FontWeight.w900, letterSpacing: size * 0.18, color: color ?? C.ink, height: 1),
       );
 }
 
@@ -65,7 +65,7 @@ class NeonButton extends StatelessWidget {
     final disabled = onPressed == null || loading;
     final fg = outline ? C.ink : C.onNeon;
     final child = loading
-        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: C.onNeon))
+        ? SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: C.onNeon))
         : Row(mainAxisSize: MainAxisSize.min, children: [
             if (icon != null) ...[Icon(icon, size: 18, color: fg), const SizedBox(width: 8)],
             Flexible(
@@ -111,7 +111,7 @@ class _MarqueeState extends State<Marquee> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    const style = TextStyle(color: C.onNeon, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.6);
+    final style = TextStyle(color: C.onNeon, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.6);
     final unit = '${widget.items.map((e) => e.toUpperCase()).join('   ✦   ')}   ✦   ';
     final tp = TextPainter(text: TextSpan(text: unit, style: style), textDirection: TextDirection.ltr)..layout();
     final w = tp.width;
@@ -144,7 +144,7 @@ class _MarqueeState extends State<Marquee> with SingleTickerProviderStateMixin {
 class Loading extends StatelessWidget {
   const Loading();
   @override
-  Widget build(BuildContext context) => const Center(child: SizedBox(width: 26, height: 26, child: CircularProgressIndicator(strokeWidth: 2.4, color: C.ink)));
+  Widget build(BuildContext context) => Center(child: SizedBox(width: 26, height: 26, child: CircularProgressIndicator(strokeWidth: 2.4, color: C.ink)));
 }
 
 class Empty extends StatelessWidget {
@@ -158,7 +158,7 @@ class Empty extends StatelessWidget {
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             Icon(icon, size: 44, color: C.line),
             const SizedBox(height: 12),
-            Text(text, textAlign: TextAlign.center, style: const TextStyle(color: C.mute)),
+            Text(text, textAlign: TextAlign.center, style: TextStyle(color: C.mute)),
           ]),
         ),
       );
@@ -173,7 +173,7 @@ class ErrorRetry extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(32),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Text(friendly(error), textAlign: TextAlign.center, style: const TextStyle(color: C.mute)),
+            Text(friendly(error), textAlign: TextAlign.center, style: TextStyle(color: C.mute)),
             const SizedBox(height: 14),
             NeonButton(tr('إعادة المحاولة', 'Retry'), onPressed: onRetry, outline: true, wide: false),
           ]),
@@ -208,7 +208,7 @@ class Badge2 extends StatelessWidget {
               constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
               padding: const EdgeInsets.symmetric(horizontal: 4),
               decoration: BoxDecoration(color: C.tint, borderRadius: BorderRadius.circular(10), border: Border.all(color: C.ink, width: 1)),
-              child: Center(child: Text(count > 99 ? '99+' : '$count', style: const TextStyle(color: C.ink, fontSize: 9, fontWeight: FontWeight.w900))),
+              child: Center(child: Text(count > 99 ? '99+' : '$count', style: TextStyle(color: C.ink, fontSize: 9, fontWeight: FontWeight.w900))),
             ),
           ),
       ]);
@@ -222,8 +222,8 @@ Future<bool> confirmDialog(BuildContext context, String title, {String? body}) a
       title: Text(title),
       content: body == null ? null : Text(body),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('لأ', 'No'), style: const TextStyle(color: C.mute))),
-        TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('تأكيد', 'Confirm'), style: const TextStyle(color: C.ink, fontWeight: FontWeight.w800))),
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('لأ', 'No'), style: TextStyle(color: C.mute))),
+        TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('تأكيد', 'Confirm'), style: TextStyle(color: C.ink, fontWeight: FontWeight.w800))),
       ],
     ),
   );
