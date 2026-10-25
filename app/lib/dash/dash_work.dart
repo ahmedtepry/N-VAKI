@@ -89,7 +89,7 @@ class _OrdersTabState extends State<OrdersTab> {
                 child: ChoiceChip(
                   label: Text(f[1], style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: filter == f[0] ? C.ink : C.mute)),
                   selected: filter == f[0],
-                  selectedColor: C.neon,
+                  selectedColor: C.tint,
                   backgroundColor: C.card,
                   showCheckmark: false,
                   side: BorderSide(color: filter == f[0] ? C.ink : C.line),
@@ -396,7 +396,7 @@ class _InboxTabState extends State<InboxTab> {
                 child: ChoiceChip(
                   label: Text(f[1], style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: filter == f[0] ? C.ink : C.mute)),
                   selected: filter == f[0],
-                  selectedColor: C.neon,
+                  selectedColor: C.tint,
                   backgroundColor: C.card,
                   showCheckmark: false,
                   side: BorderSide(color: filter == f[0] ? C.ink : C.line),
@@ -424,7 +424,7 @@ class _InboxTabState extends State<InboxTab> {
                           final name = (cust?['full_name'] ?? tr('عميل', 'Customer')).toString();
                           return ListTile(
                             contentPadding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-                            leading: Container(width: 42, height: 42, alignment: Alignment.center, decoration: BoxDecoration(color: unread > 0 ? C.neon : C.card, shape: BoxShape.circle, border: Border.all(color: unread > 0 ? C.ink : C.line)), child: Text(name.characters.first.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.w900))),
+                            leading: Container(width: 42, height: 42, alignment: Alignment.center, decoration: BoxDecoration(color: unread > 0 ? C.tint : C.card, shape: BoxShape.circle, border: Border.all(color: unread > 0 ? C.ink : C.line)), child: Text(name.characters.first.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.w900))),
                             title: Text(name, style: TextStyle(fontWeight: unread > 0 ? FontWeight.w900 : FontWeight.w700)),
                             subtitle: Text('${(c['subject'] ?? '').toString().isEmpty ? tr('استفسار', 'Inquiry') : c['subject']}  ·  ${c['agent_name'] ?? tr('بدون مسؤول', 'unassigned')}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: C.mute)),
                             trailing: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [

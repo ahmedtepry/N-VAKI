@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import '../core/models.dart';
 import '../core/theme.dart';
@@ -34,7 +35,8 @@ class GarmentPainter extends CustomPainter {
   final double swing; // radians, rotates around the hook
   final bool shadow;
   final bool hangerOnly;
-  GarmentPainter({required this.garment, required this.color, this.accent, this.swing = 0, this.shadow = true, this.hangerOnly = false});
+  final bool hanger;
+  GarmentPainter({required this.garment, required this.color, this.accent, this.swing = 0, this.shadow = true, this.hangerOnly = false, this.hanger = true});
 
   static const double W = 100, H = 118;
   static const _rect = Rect.fromLTWH(0, 0, W, H);
@@ -74,7 +76,7 @@ class GarmentPainter extends CustomPainter {
       canvas.drawPath(sil, Paint()..color = Colors.black.withValues(alpha: 0.14)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5));
       canvas.restore();
     }
-    _arms(canvas);
+    if (hanger) _arms(canvas);
     if (garment == 'hoodie') _hood(canvas);
 
     // sleeves sit behind the torso's front edge but over the body: draw torso first, then sleeves
@@ -90,7 +92,7 @@ class GarmentPainter extends CustomPainter {
     canvas.clipPath(sil);
     _details(canvas);
     canvas.restore();
-    _hook(canvas);
+    if (hanger) _hook(canvas);
 
     canvas.drawPath(sil, Paint()..style = PaintingStyle.stroke..strokeWidth = 0.7..strokeJoin = StrokeJoin.round..color = Colors.black.withValues(alpha: 0.24));
     canvas.restore();
@@ -444,55 +446,111 @@ class GarmentPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant GarmentPainter o) =>
-      o.garment != garment || o.color != color || o.accent != accent || o.swing != swing || o.shadow != shadow || o.hangerOnly != hangerOnly;
+      o.garment != garment || o.color != color || o.accent != accent || o.swing != swing || o.shadow != shadow || o.hangerOnly != hangerOnly || o.hanger != hanger;
+}
+
+/// Painted garments are rasterised once (per garment/colour/size) and then only rotated, which keeps swiping smooth.
+class _RasterCache {
+  static final Map<String, ui.Image> _m = {};
+  static final Set<String> _busy = {};
+  static ui.Image? get(String k) {
+    final v = _m.remove(k);
+    if (v != null) _m[k] = v; // LRU touch
+    return v;
+  }
+
+  static Future<ui.Image?> make(String k, GarmentPainter p, Size px) async {
+    if (!_busy.add(k)) return null;
+    try {
+      final rec = ui.PictureRecorder();
+      final c = Canvas(rec);
+      p.paint(c, px);
+      final img = await rec.endRecording().toImage(px.width.ceil(), px.height.ceil());
+      _m[k] = img;
+      while (_m.length > 48) {
+        _m.remove(_m.keys.first);
+      }
+      return img;
+    } finally {
+      _busy.remove(k);
+    }
+  }
 }
 
 /// A garment (painted, or a real product photo when [imageUrl] is set) hanging from its hook.
-class GarmentView extends StatelessWidget {
+class GarmentView extends StatefulWidget {
   final String garment;
   final Color color;
   final Color? accent;
   final String? imageUrl;
   final double swing;
   final double width;
-  final bool shadow;
-  const GarmentView({required this.garment, required this.color, this.accent, this.imageUrl, this.swing = 0, required this.width, this.shadow = true});
+  final bool shadow, hanger;
+  const GarmentView({required this.garment, required this.color, this.accent, this.imageUrl, this.swing = 0, required this.width, this.shadow = true, this.hanger = true});
+  @override
+  State<GarmentView> createState() => _GarmentViewState();
+}
+
+class _GarmentViewState extends State<GarmentView> {
+  String? _asked;
+
+  String _key(double dpr) =>
+      '${widget.garment}|${widget.color.hashCode}|${widget.accent?.hashCode}|${(widget.width * dpr).round()}|${widget.shadow}|${widget.hanger}';
+
+  GarmentPainter _painter() => GarmentPainter(garment: widget.garment, color: widget.color, accent: widget.accent, shadow: widget.shadow, hanger: widget.hanger);
 
   @override
   Widget build(BuildContext context) {
-    final h = width * GarmentPainter.H / GarmentPainter.W;
-    if (imageUrl != null && imageUrl!.isNotEmpty) {
+    final w = widget.width;
+    final h = w * GarmentPainter.H / GarmentPainter.W;
+    final hasPhoto = widget.imageUrl != null && widget.imageUrl!.isNotEmpty;
+    if (hasPhoto) {
       return SizedBox(
-        width: width,
+        width: w,
         height: h,
         child: Transform.rotate(
-          angle: swing,
+          angle: widget.swing,
           alignment: const Alignment(0, -1),
           child: Stack(children: [
-            Positioned.fill(child: CustomPaint(painter: GarmentPainter(garment: garment, color: color, hangerOnly: true))),
+            Positioned.fill(child: RepaintBoundary(child: CustomPaint(painter: GarmentPainter(garment: widget.garment, color: widget.color, hangerOnly: true)))),
             Positioned(
               left: 0,
               right: 0,
               top: h * 0.09,
               bottom: 0,
               child: Image.network(
-                imageUrl!,
+                widget.imageUrl!,
                 fit: BoxFit.contain,
                 alignment: Alignment.topCenter,
                 // multiplying by the page colour makes a white photo background disappear
                 color: C.bg,
                 colorBlendMode: BlendMode.multiply,
-                errorBuilder: (_, __, ___) => CustomPaint(painter: GarmentPainter(garment: garment, color: color, accent: accent, shadow: shadow)),
+                errorBuilder: (_, __, ___) => CustomPaint(painter: _painter()),
               ),
             ),
           ]),
         ),
       );
     }
+    final dpr = MediaQuery.devicePixelRatioOf(context);
+    final k = _key(dpr);
+    final img = _RasterCache.get(k);
+    Widget body;
+    if (img != null) {
+      body = RawImage(image: img, scale: dpr, width: w, height: h, fit: BoxFit.fill);
+    } else {
+      body = CustomPaint(size: Size(w, h), painter: _painter());
+      if (_asked != k) {
+        _asked = k;
+        _RasterCache.make(k, _painter(), Size(w * dpr, h * dpr)).then((_) {
+          if (mounted && _asked == k) setState(() {});
+        });
+      }
+    }
     return SizedBox(
-      width: width,
+      width: w,
       height: h,
-      child: CustomPaint(painter: GarmentPainter(garment: garment, color: color, accent: accent, swing: swing, shadow: shadow)),
+      child: Transform.rotate(angle: widget.swing, alignment: const Alignment(0, -0.94), child: body),
     );
   }
 }

@@ -215,7 +215,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             width: 22,
             height: 22,
             decoration: BoxDecoration(color: i <= at ? C.neon : Colors.transparent, shape: BoxShape.circle, border: Border.all(color: i <= at ? C.ink : C.line, width: 1.2)),
-            child: i <= at ? const Icon(Icons.check_rounded, size: 14) : null,
+            child: i <= at ? const Icon(Icons.check_rounded, size: 14, color: C.onNeon) : null,
           ),
           const SizedBox(height: 4),
           Text(statusLabel(steps[i]), style: TextStyle(fontSize: 8.5, color: i <= at ? C.ink : C.mute, fontWeight: i == at ? FontWeight.w900 : FontWeight.w500)),

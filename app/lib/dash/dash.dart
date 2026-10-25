@@ -185,7 +185,7 @@ class _OverviewTabState extends State<OverviewTab> {
 
   Widget _kpi(String label, String value, IconData icon, {bool neon = false, bool hot = false}) => Container(
         padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(color: neon ? C.neon : C.card, borderRadius: BorderRadius.circular(14), border: Border.all(color: hot ? C.warn : (neon ? C.ink : C.line), width: hot ? 1.6 : 1)),
+        decoration: BoxDecoration(color: neon ? C.tint : C.card, borderRadius: BorderRadius.circular(14), border: Border.all(color: hot ? C.warn : (neon ? C.ink : C.line), width: hot ? 1.6 : 1)),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           Row(children: [Icon(icon, size: 17, color: hot ? C.warn : C.ink), const SizedBox(width: 6), Expanded(child: Text(label, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11.5, color: C.mute, fontWeight: FontWeight.w600)))]),
           FittedBox(fit: BoxFit.scaleDown, alignment: AlignmentDirectional.centerStart, child: Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900))),

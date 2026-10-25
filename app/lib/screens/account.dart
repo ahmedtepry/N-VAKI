@@ -23,7 +23,7 @@ class AccountScreen extends StatelessWidget {
           appBar: AppBar(title: Text(tr('حسابي', 'ACCOUNT'))),
           body: ListView(padding: const EdgeInsets.fromLTRB(22, 8, 22, 30), children: [
             Row(children: [
-              Container(width: 60, height: 60, alignment: Alignment.center, decoration: const BoxDecoration(color: C.neon, shape: BoxShape.circle), child: Text(initial, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900))),
+              Container(width: 60, height: 60, alignment: Alignment.center, decoration: const BoxDecoration(color: C.neon, shape: BoxShape.circle), child: Text(initial, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: C.onNeon))),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -56,7 +56,7 @@ class AccountScreen extends StatelessWidget {
   Widget _tile(BuildContext context, IconData i, String t, VoidCallback f, {bool highlight = false}) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 5),
         child: Material(
-          color: highlight ? C.neon : C.card,
+          color: highlight ? C.tint : C.card,
           borderRadius: BorderRadius.circular(14),
           child: InkWell(
             borderRadius: BorderRadius.circular(14),

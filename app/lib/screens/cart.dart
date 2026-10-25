@@ -180,7 +180,7 @@ class OrderPlacedScreen extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(32),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Container(width: 84, height: 84, decoration: const BoxDecoration(color: C.neon, shape: BoxShape.circle), child: const Icon(Icons.check_rounded, size: 48)),
+              Container(width: 84, height: 84, decoration: const BoxDecoration(color: C.neon, shape: BoxShape.circle), child: const Icon(Icons.check_rounded, size: 48, color: C.onNeon)),
               const SizedBox(height: 22),
               Text(tr('تم استلام طلبك', 'ORDER RECEIVED'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 1.6)),
               const SizedBox(height: 8),

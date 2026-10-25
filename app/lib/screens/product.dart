@@ -4,6 +4,7 @@ import 'package:flutter/scheduler.dart';
 import '../core/app.dart';
 import '../core/common.dart';
 import '../core/models.dart';
+import '../core/specs.dart';
 import '../core/theme.dart';
 import '../widgets/garment.dart';
 import 'cart.dart';
@@ -93,7 +94,8 @@ class _ProductScreenState extends State<ProductScreen> with SingleTickerProvider
   Widget build(BuildContext context) {
     final h = MediaQuery.of(context).size.height;
     final w = MediaQuery.of(context).size.width;
-    final gw = math.min(w * 0.68, h * 0.36);
+    final rackH = h * 0.44;
+    final gw = math.min(w * 0.78, (rackH - 18) / 1.18);
     return ListenableBuilder(
       listenable: App.i,
       builder: (context, _) => Scaffold(
@@ -112,7 +114,8 @@ class _ProductScreenState extends State<ProductScreen> with SingleTickerProvider
         ),
         body: SafeArea(
           child: Column(children: [
-            Expanded(
+            SizedBox(
+              height: rackH,
               child: Stack(children: [
                 Positioned(
                   left: 0,
@@ -136,14 +139,12 @@ class _ProductScreenState extends State<ProductScreen> with SingleTickerProvider
                       onTap: () => sw.kick(1.3), // tap the garment to make it swing
                       child: Align(
                         alignment: Alignment.topCenter,
-                        child: TweenAnimationBuilder<Color?>(
-                          tween: ColorTween(end: hexColor(hx)),
-                          duration: const Duration(milliseconds: 400),
-                          builder: (_, col, __) => AnimatedBuilder(
+                        child: RepaintBoundary(
+                          child: AnimatedBuilder(
                             animation: frame,
                             builder: (_, __) => GarmentView(
                               garment: x.garment,
-                              color: col ?? hexColor(hx),
+                              color: hexColor(hx),
                               accent: v.accent == null ? null : hexColor(v.accent!),
                               imageUrl: v.image,
                               width: gw,
@@ -170,7 +171,8 @@ class _ProductScreenState extends State<ProductScreen> with SingleTickerProvider
                 ),
               ]),
             ),
-            ConstrainedBox(constraints: BoxConstraints(maxHeight: h * 0.46), child: SingleChildScrollView(child: _panel())),
+            Expanded(child: SingleChildScrollView(child: _panel())),
+            _buyBar(),
           ]),
         ),
       ),
@@ -215,31 +217,91 @@ class _ProductScreenState extends State<ProductScreen> with SingleTickerProvider
     );
   }
 
-  void _sizeGuide() {
-    const rows = [
-      ['S', '52', '68'],
-      ['M', '54', '70'],
-      ['L', '56', '72'],
-      ['XL', '58', '74'],
-      ['XXL', '60', '76'],
-    ];
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: C.bg,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 30),
-        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(tr('دليل المقاسات (تقريبي بالسم)', 'SIZE GUIDE (approx., cm)'), style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.3, fontSize: 13)),
-          const SizedBox(height: 14),
-          Row(children: [for (final t in [tr('المقاس', 'Size'), tr('عرض الصدر', 'Chest'), tr('الطول', 'Length')]) Expanded(child: Text(t, style: const TextStyle(color: C.mute, fontSize: 12)))]),
-          const Divider(),
-          for (final r in rows) Padding(padding: const EdgeInsets.symmetric(vertical: 6), child: Row(children: [for (final t in r) Expanded(child: Text(t, style: const TextStyle(fontWeight: FontWeight.w800)))])),
-          const SizedBox(height: 8),
-          Text(tr('القصّة واسعة شوية. لو بين مقاسين، خد الأصغر.', 'Relaxed fit. Between sizes? Go smaller.'), style: const TextStyle(color: C.mute, fontSize: 12)),
-        ]),
+  Widget _buyBar() {
+    final v = curVariant;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(24, 10, 24, 12),
+      decoration: const BoxDecoration(color: C.bg, border: Border(top: BorderSide(color: C.line))),
+      child: NeonButton(
+        v == null ? tr('اختار المقاس', 'Pick a size') : tr('أضف للشنطة · ${money(p.price)}', 'Add to bag · ${money(p.price)}'),
+        onPressed: _add,
+        icon: Icons.add_shopping_cart_rounded,
       ),
     );
+  }
+
+  Widget _label(String t) => Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Text(t.toUpperCase(), style: const TextStyle(fontSize: 11, color: C.mute, letterSpacing: 1.4, fontWeight: FontWeight.w800)),
+      );
+
+  Widget _kv(String k, String v) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          SizedBox(width: 92, child: Text(k, style: const TextStyle(fontSize: 12.5, color: C.mute))),
+          Expanded(child: Text(v, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, height: 1.35))),
+        ]),
+      );
+
+  Widget _sizeTable(List<Variant> sizes) {
+    final rows = <SizeSpec>[];
+    for (final s in sizes) {
+      final sp = sizeSpec(p.garment, s.size);
+      if (sp != null) rows.add(sp);
+    }
+    if (rows.isEmpty) return const SizedBox.shrink();
+    final sel = curSize?.toUpperCase();
+    TextStyle hd() => const TextStyle(fontSize: 10.5, color: C.mute, fontWeight: FontWeight.w700);
+    Widget cell(String t, {bool bold = false, int flex = 1}) => Expanded(flex: flex, child: Text(t, style: TextStyle(fontSize: 12.5, fontWeight: bold ? FontWeight.w900 : FontWeight.w600)));
+    String n(double x) => x == x.roundToDouble() ? x.round().toString() : x.toStringAsFixed(1);
+    final detail = rows.firstWhere((r) => r.size == sel, orElse: () => rows.firstWhere((r) => r.size == 'M', orElse: () => rows.first));
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      _label(tr('المقاسات بالسنتي', 'Measurements (cm)')),
+      Container(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+        decoration: BoxDecoration(color: C.card, borderRadius: BorderRadius.circular(14), border: Border.all(color: C.line)),
+        child: Column(children: [
+          Row(children: [
+            Expanded(child: Text(tr('المقاس', 'Size'), style: hd())),
+            Expanded(flex: 2, child: Text(tr('عرض الصدر', 'Chest'), style: hd())),
+            Expanded(flex: 2, child: Text(tr('الطول', 'Length'), style: hd())),
+            Expanded(flex: 2, child: Text(tr('الكتف', 'Shoulder'), style: hd())),
+            Expanded(flex: 2, child: Text(tr('الكم', 'Sleeve'), style: hd())),
+          ]),
+          const Divider(height: 14),
+          for (final r in rows)
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 1.5),
+              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
+              decoration: BoxDecoration(color: r.size == sel ? C.tint : Colors.transparent, borderRadius: BorderRadius.circular(8)),
+              child: Row(children: [
+                cell(r.size, bold: true),
+                cell(n(r.chest), flex: 2),
+                cell(n(r.length), flex: 2),
+                cell(n(r.shoulder), flex: 2),
+                cell(n(r.sleeve), flex: 2),
+              ]),
+            ),
+        ]),
+      ),
+      const SizedBox(height: 10),
+      Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(color: C.tint.withValues(alpha: 0.55), borderRadius: BorderRadius.circular(12)),
+        child: Row(children: [
+          const Icon(Icons.straighten_rounded, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              tr('مقاس ${detail.size} مناسب لطول ${detail.height} سم ووزن ${detail.weight} كجم تقريباً', 'Size ${detail.size} suits roughly ${detail.height} cm height and ${detail.weight} kg'),
+              style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, height: 1.4),
+            ),
+          ),
+        ]),
+      ),
+      const SizedBox(height: 6),
+      Text(tr('القياسات للقطعة وهي مفرودة، وممكن تختلف 1-2 سم. لو بين مقاسين خد الأكبر لو بتحب الواسع، أو الأصغر لو بتحب الضيق.', 'Measured flat on the garment, ±1-2 cm. Between sizes? Size up for a looser fit, down for a closer one.'), style: const TextStyle(fontSize: 11.5, color: C.mute, height: 1.45)),
+    ]);
   }
 
   Widget _panel() {
@@ -247,49 +309,76 @@ class _ProductScreenState extends State<ProductScreen> with SingleTickerProvider
     final v = curVariant;
     final colorName = p.colors.firstWhere((e) => e.hex == curHex, orElse: () => p.colors.first).color;
     final off = (p.compareAt != null && p.compareAt! > p.price) ? ((1 - p.price / p.compareAt!) * 100).round() : 0;
+    final fab = fabricFor(p.garment);
+    final inStock = sizes.where((s) => s.stock > 0).length;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 10, 24, 18),
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 20),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-          Expanded(child: AnimatedSwitcher(duration: const Duration(milliseconds: 200), child: Text(p.name.toUpperCase(), key: ValueKey(p.id), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, letterSpacing: 1.6)))),
+          Expanded(child: AnimatedSwitcher(duration: const Duration(milliseconds: 200), child: Text(p.name.toUpperCase(), key: ValueKey(p.id), style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900, letterSpacing: 1.6)))),
           Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-            Text(money(p.price), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
-            if (off > 0) Row(mainAxisSize: MainAxisSize.min, children: [
-              Text(money(p.compareAt!), style: const TextStyle(fontSize: 11, color: C.mute, decoration: TextDecoration.lineThrough)),
-              const SizedBox(width: 6),
-              Container(padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1), decoration: BoxDecoration(color: C.neon, borderRadius: BorderRadius.circular(4)), child: Text('-$off%', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900))),
-            ]),
+            Text(money(p.price), style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900)),
+            if (off > 0)
+              Row(mainAxisSize: MainAxisSize.min, children: [
+                Text(money(p.compareAt!), style: const TextStyle(fontSize: 11, color: C.mute, decoration: TextDecoration.lineThrough)),
+                const SizedBox(width: 6),
+                Container(padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1), decoration: BoxDecoration(color: C.neon, borderRadius: BorderRadius.circular(4)), child: Text('-$off%', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: C.onNeon))),
+              ]),
           ]),
         ]),
         const SizedBox(height: 4),
-        Text(colorName, style: const TextStyle(fontSize: 12, color: C.mute, letterSpacing: 0.8)),
-        const SizedBox(height: 12),
-        Row(children: [
-          Text(tr('المقاس', 'SIZE'), style: const TextStyle(fontSize: 11, color: C.mute, letterSpacing: 1.3, fontWeight: FontWeight.w800)),
-          const Spacer(),
-          GestureDetector(onTap: _sizeGuide, child: Text(tr('دليل المقاسات', 'Size guide'), style: const TextStyle(fontSize: 12, decoration: TextDecoration.underline, fontWeight: FontWeight.w700))),
-        ]),
-        const SizedBox(height: 8),
-        Wrap(spacing: 8, runSpacing: 8, children: [
+        Text(colorName, style: const TextStyle(fontSize: 12.5, color: C.mute, letterSpacing: 0.8)),
+        const SizedBox(height: 18),
+        _label(tr('المقاسات المتاحة', 'Available sizes')),
+        Wrap(spacing: 10, runSpacing: 10, children: [
           for (final s in sizes)
             GestureDetector(
               onTap: s.stock <= 0 ? null : () => setState(() => sizeOf[p.id] = s.size),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 160),
-                width: 48,
-                height: 38,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(color: curSize == s.size ? C.ink : Colors.transparent, borderRadius: BorderRadius.circular(8), border: Border.all(color: s.stock <= 0 ? C.line : C.ink, width: 1)),
-                child: Text(s.size, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: curSize == s.size ? Colors.white : (s.stock <= 0 ? C.line : C.ink), decoration: s.stock <= 0 ? TextDecoration.lineThrough : TextDecoration.none)),
+                width: 62,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(color: curSize == s.size ? C.ink : Colors.transparent, borderRadius: BorderRadius.circular(12), border: Border.all(color: s.stock <= 0 ? C.line : C.ink, width: 1)),
+                child: Column(children: [
+                  Text(s.size, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: curSize == s.size ? C.bg : (s.stock <= 0 ? C.line : C.ink), decoration: s.stock <= 0 ? TextDecoration.lineThrough : TextDecoration.none)),
+                  const SizedBox(height: 2),
+                  Text(
+                    s.stock <= 0 ? tr('خلص', 'Sold out') : (s.stock <= 3 ? tr('باقي ${s.stock}', '${s.stock} left') : tr('متاح', 'In stock')),
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: curSize == s.size ? C.bg.withValues(alpha: 0.8) : (s.stock <= 0 ? C.line : (s.stock <= 3 ? C.warn : C.mute))),
+                  ),
+                ]),
               ),
             ),
         ]),
-        if (v != null && v.stock > 0 && v.stock <= 3) Padding(padding: const EdgeInsets.only(top: 8), child: Text(tr('باقي ${v.stock} قطع بس', 'Only ${v.stock} left'), style: const TextStyle(color: C.warn, fontWeight: FontWeight.w700, fontSize: 12))),
-        const SizedBox(height: 16),
-        NeonButton(tr('أضف للشنطة', 'Add to bag'), onPressed: _add, icon: Icons.add_shopping_cart_rounded),
+        if (inStock == 0) Padding(padding: const EdgeInsets.only(top: 8), child: Text(tr('اللون ده خلص كله', 'This colour is sold out'), style: const TextStyle(color: C.danger, fontWeight: FontWeight.w700, fontSize: 12.5))),
+        if (v != null && v.stock > 0 && v.stock <= 3) Padding(padding: const EdgeInsets.only(top: 8), child: Text(tr('باقي ${v.stock} قطع بس من المقاس ده', 'Only ${v.stock} left in this size'), style: const TextStyle(color: C.warn, fontWeight: FontWeight.w700, fontSize: 12.5))),
+        const SizedBox(height: 22),
+        _sizeTable(sizes),
+        const SizedBox(height: 22),
+        _label(tr('الخامة والتفاصيل', 'Fabric & details')),
+        Container(
+          padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
+          decoration: BoxDecoration(color: C.card, borderRadius: BorderRadius.circular(14), border: Border.all(color: C.line)),
+          child: Column(children: [
+            _kv(tr('الخامة', 'Material'), fab.material),
+            const Divider(height: 1),
+            _kv(tr('الوزن', 'Weight'), fab.weight),
+            const Divider(height: 1),
+            _kv(tr('القصّة', 'Fit'), fab.fit),
+            const Divider(height: 1),
+            _kv(tr('العناية', 'Care'), fab.care),
+          ]),
+        ),
+        const SizedBox(height: 14),
+        Row(children: [
+          const Icon(Icons.local_shipping_outlined, size: 18),
+          const SizedBox(width: 8),
+          Expanded(child: Text(tr('الدفع عند الاستلام · شحن ${money(App.i.shippingFee)}، ومجاني فوق ${money(App.i.freeOver)}', 'Cash on delivery · shipping ${money(App.i.shippingFee)}, free over ${money(App.i.freeOver)}'), style: const TextStyle(fontSize: 12.5, color: C.mute, height: 1.4))),
+        ]),
         if (p.desc.isNotEmpty) ...[
-          const SizedBox(height: 14),
-          Text(p.desc, style: const TextStyle(fontSize: 12.5, color: C.mute, height: 1.5)),
+          const SizedBox(height: 16),
+          _label(tr('عن القطعة', 'About')),
+          Text(p.desc, style: const TextStyle(fontSize: 13, color: C.ink, height: 1.55)),
         ],
       ]),
     );

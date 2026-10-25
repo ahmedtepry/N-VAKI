@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class C {
-  static const bg = Color(0xFFF4F3EE);
-  static const ink = Color(0xFF0E0E0E);
-  static const neon = Color(0xFF39FF14);
-  static const mute = Color(0xFF8B8A84);
-  static const line = Color(0xFFDAD8D0);
+  static const bg = Color(0xFFF6F0EA); // warm cream
+  static const ink = Color(0xFF1B1315); // warm near-black
+  static const neon = Color(0xFF6E2A35); // muted burgundy (brand accent)
+  static const onNeon = Color(0xFFF7EEE8); // text/icons on the accent
+  static const tint = Color(0xFFE9D3D3); // pale rose for selected chips / highlights
+  static const mute = Color(0xFF8A7F7B);
+  static const line = Color(0xFFDDD2CB);
   static const card = Color(0xFFFFFFFF);
   static const danger = Color(0xFFD92D20);
   static const ok = Color(0xFF12B76A);
@@ -21,7 +23,7 @@ ThemeData buildTheme(bool ar) {
       primary: C.ink,
       onPrimary: Colors.white,
       secondary: C.neon,
-      onSecondary: C.ink,
+      onSecondary: C.onNeon,
       surface: C.bg,
       onSurface: C.ink,
       error: C.danger,
@@ -51,7 +53,8 @@ ThemeData buildTheme(bool ar) {
       backgroundColor: C.ink,
       contentTextStyle: text.bodyMedium?.copyWith(color: Colors.white),
     ),
-    navigationBarTheme: const NavigationBarThemeData(backgroundColor: C.bg, indicatorColor: C.neon),
+    navigationBarTheme: const NavigationBarThemeData(backgroundColor: C.bg, indicatorColor: C.tint),
     dividerColor: C.line,
+    chipTheme: ChipThemeData(selectedColor: C.tint, secondarySelectedColor: C.tint, checkmarkColor: C.ink),
   );
 }

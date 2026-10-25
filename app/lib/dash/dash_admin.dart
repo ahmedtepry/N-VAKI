@@ -75,7 +75,7 @@ class _CatalogTabState extends State<CatalogTab> {
       backgroundColor: Colors.transparent,
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: C.neon,
-        foregroundColor: C.ink,
+        foregroundColor: C.onNeon,
         elevation: 0,
         shape: const StadiumBorder(side: BorderSide(color: C.ink)),
         onPressed: () => _open(null),
@@ -297,7 +297,7 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
               ChoiceChip(
                 label: Text(tr(e.value[0], e.value[1]), style: TextStyle(fontWeight: FontWeight.w800, color: garment == e.key ? C.ink : C.mute)),
                 selected: garment == e.key,
-                selectedColor: C.neon,
+                selectedColor: C.tint,
                 backgroundColor: C.card,
                 showCheckmark: false,
                 side: BorderSide(color: garment == e.key ? C.ink : C.line),
@@ -449,7 +449,7 @@ class _AddColorSheetState extends State<_AddColorSheet> {
               FilterChip(
                 label: Text(s, style: const TextStyle(fontWeight: FontWeight.w800)),
                 selected: sizes.contains(s),
-                selectedColor: C.neon,
+                selectedColor: C.tint,
                 backgroundColor: C.card,
                 showCheckmark: false,
                 side: BorderSide(color: sizes.contains(s) ? C.ink : C.line),
@@ -555,7 +555,7 @@ class _TeamTabState extends State<TeamTab> {
                 ChoiceChip(
                   label: Text(roleLabel(r), style: TextStyle(fontWeight: FontWeight.w800, color: role == r ? C.ink : C.mute)),
                   selected: role == r,
-                  selectedColor: C.neon,
+                  selectedColor: C.tint,
                   backgroundColor: C.bg,
                   showCheckmark: false,
                   side: BorderSide(color: role == r ? C.ink : C.line),

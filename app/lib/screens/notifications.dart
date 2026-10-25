@@ -80,7 +80,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                               Container(
                                 width: 38,
                                 height: 38,
-                                decoration: BoxDecoration(color: unread ? C.neon : C.card, shape: BoxShape.circle, border: Border.all(color: unread ? C.ink : C.line)),
+                                decoration: BoxDecoration(color: unread ? C.tint : C.card, shape: BoxShape.circle, border: Border.all(color: unread ? C.ink : C.line)),
                                 child: Icon(_icon(r['kind'] ?? ''), size: 19),
                               ),
                               const SizedBox(width: 12),

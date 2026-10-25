@@ -134,7 +134,7 @@ class _ChatScreenState extends State<ChatScreen> {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Material(color: C.neon, shape: const CircleBorder(), child: InkWell(customBorder: const CircleBorder(), onTap: _send, child: const Padding(padding: EdgeInsets.all(12), child: Icon(Icons.arrow_upward_rounded, size: 22)))),
+                          Material(color: C.neon, shape: const CircleBorder(), child: InkWell(customBorder: const CircleBorder(), onTap: _send, child: const Padding(padding: EdgeInsets.all(12), child: Icon(Icons.arrow_upward_rounded, size: 22, color: C.onNeon)))),
                         ]),
                       ),
                     ),

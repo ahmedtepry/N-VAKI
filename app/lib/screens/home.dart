@@ -34,7 +34,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   Object? error;
   String cat = 'all', query = '';
   int idx = 0;
-  final pc = PageController(viewportFraction: 0.5);
+  final pc = PageController(viewportFraction: 0.68);
   final frame = Frame();
   final search = TextEditingController();
   late final Ticker ticker;
@@ -151,7 +151,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
           decoration: BoxDecoration(color: C.neon, borderRadius: BorderRadius.circular(6)),
-          child: const Wordmark(size: 13),
+          child: const Wordmark(size: 13, color: C.onNeon),
         ),
         const Spacer(),
         ic(searching ? Icons.close_rounded : Icons.search_rounded, () {
@@ -229,7 +229,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     if (error != null) return ErrorRetry(error!, _load);
     if (l.isEmpty) return Empty(cat == 'fav' ? tr('لسه مضفتش حاجة للمفضلة', 'Nothing saved yet') : tr('مفيش قطع هنا', 'Nothing here'));
     return LayoutBuilder(builder: (context, c) {
-      final itemW = c.maxWidth * 0.5 * 0.94;
+      final itemW = math.min(c.maxWidth * 0.68 * 0.98, (c.maxHeight - 34) / 1.18);
       return Stack(children: [
         // the rail
         Positioned(
@@ -268,13 +268,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       ..rotateY(-d.clamp(-1.0, 1.0) * 0.5);
                     return Align(
                       alignment: Alignment.topCenter,
-                      child: Opacity(
-                        opacity: 1 - 0.5 * a,
+                      child: RepaintBoundary(
                         child: Transform(
                           transform: m,
                           alignment: Alignment.topCenter,
                           child: Transform.scale(
-                            scale: 1 - 0.24 * a,
+                            scale: 1 - 0.2 * a,
                             alignment: Alignment.topCenter,
                             child: GarmentView(
                               garment: p.garment,
@@ -339,7 +338,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               width: 50,
               height: 50,
               decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: C.ink, width: 1.2), color: fav ? C.neon : Colors.transparent),
-              child: Icon(fav ? Icons.favorite_rounded : Icons.favorite_border_rounded, size: 21),
+              child: Icon(fav ? Icons.favorite_rounded : Icons.favorite_border_rounded, size: 21, color: fav ? C.onNeon : C.ink),
             ),
           ),
         ]),

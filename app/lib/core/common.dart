@@ -56,9 +56,9 @@ class NeonButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final disabled = onPressed == null || loading;
-    final fg = outline ? C.ink : C.ink;
+    final fg = outline ? C.ink : C.onNeon;
     final child = loading
-        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: C.ink))
+        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: C.onNeon))
         : Row(mainAxisSize: MainAxisSize.min, children: [
             if (icon != null) ...[Icon(icon, size: 18, color: fg), const SizedBox(width: 8)],
             Flexible(
@@ -104,7 +104,7 @@ class _MarqueeState extends State<Marquee> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    const style = TextStyle(color: C.ink, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.6);
+    const style = TextStyle(color: C.onNeon, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.6);
     final unit = '${widget.items.map((e) => e.toUpperCase()).join('   ✦   ')}   ✦   ';
     final tp = TextPainter(text: TextSpan(text: unit, style: style), textDirection: TextDirection.ltr)..layout();
     final w = tp.width;
@@ -200,7 +200,7 @@ class Badge2 extends StatelessWidget {
             child: Container(
               constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
               padding: const EdgeInsets.symmetric(horizontal: 4),
-              decoration: BoxDecoration(color: C.neon, borderRadius: BorderRadius.circular(10), border: Border.all(color: C.ink, width: 1)),
+              decoration: BoxDecoration(color: C.tint, borderRadius: BorderRadius.circular(10), border: Border.all(color: C.ink, width: 1)),
               child: Center(child: Text(count > 99 ? '99+' : '$count', style: const TextStyle(color: C.ink, fontSize: 9, fontWeight: FontWeight.w900))),
             ),
           ),
