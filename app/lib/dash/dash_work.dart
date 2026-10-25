@@ -199,18 +199,17 @@ class _OrderManageScreenState extends State<OrderManageScreen> {
     }
   }
 
+  /// Every status the person may switch this order to (they pick one; the current one is shown as selected).
   List<String> get nextStatuses {
-    final s = o!['status'] as String;
-    final m = {
-      'new': ['confirmed', 'cancelled'],
-      'confirmed': ['packed', 'cancelled'],
-      'packed': ['shipped', 'cancelled'],
-      'shipped': ['delivered', 'cancelled'],
-    };
-    final l = m[s] ?? <String>[];
-    if (!App.i.can('orders_manage')) return l.where((e) => e == 'shipped' || e == 'delivered').toList();
-    if (App.i.role == 'support') return l.where((e) => e == 'confirmed' || e == 'cancelled').toList();
-    return l;
+    final cur = o!['status'] as String;
+    if (cur == 'cancelled') return <String>[];
+    List<String> l = ['new', 'confirmed', 'packed', 'shipped', 'delivered', 'cancelled'];
+    if (!App.i.can('orders_manage')) {
+      l = cur == 'packed' ? ['shipped'] : cur == 'shipped' ? ['delivered'] : <String>[];
+    } else if (App.i.role == 'support') {
+      l = ['confirmed', 'cancelled'];
+    }
+    return l.where((e) => e != cur).toList();
   }
 
   Widget _paymentPanel(Json d) {
@@ -311,6 +310,13 @@ class _OrderManageScreenState extends State<OrderManageScreen> {
     }
   }
 
+  Future<void> _confirmSet(String status) async {
+    if (status == 'cancelled') return _set(status);
+    final cur = o!['status'] as String;
+    if (!await confirmDialog(context, tr('تغيير الحالة إلى "${statusLabel(status)}"؟', 'Change status to "${statusLabel(status)}"?'), body: tr('الحالة الحالية: ${statusLabel(cur)}. العميل هيوصله إشعار.', 'Now: ${statusLabel(cur)}. The customer is notified.'))) return;
+    await _set(status);
+  }
+
   Future<void> _set(String status) async {
     String? note;
     if (status == 'cancelled') {
@@ -399,12 +405,20 @@ class _OrderManageScreenState extends State<OrderManageScreen> {
                   if (App.i.can('orders_view'))
                     NeonButton(tr('فاتورة / أمر تجهيز PDF', 'Prep sheet / invoice PDF'), icon: Icons.picture_as_pdf_outlined, outline: true, onPressed: () => shareInvoice(d, staff: true, driverName: people[d['driver_id']]?['full_name'])),
                   const SizedBox(height: 18),
-                  if (nextStatuses.isNotEmpty)
-                    for (final s in nextStatuses)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: NeonButton(s == 'cancelled' ? tr('إلغاء الطلب', 'Cancel order') : '${tr('تحويل إلى', 'Mark as')} ${statusLabel(s)}', outline: s == 'cancelled', loading: busy && s != 'cancelled', onPressed: busy ? null : () => _set(s)),
-                      ),
+                  if (nextStatuses.isNotEmpty) ...[
+                    Text(tr('غيّر حالة الطلب', 'CHANGE STATUS'), style: TextStyle(fontSize: 11, color: C.mute, letterSpacing: 1.4, fontWeight: FontWeight.w800)),
+                    const SizedBox(height: 8),
+                    Wrap(spacing: 8, runSpacing: 8, children: [
+                      for (final st in nextStatuses)
+                        ActionChip(
+                          label: Text(statusLabel(st), style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5, color: st == 'cancelled' ? C.danger : C.ink)),
+                          avatar: Container(width: 10, height: 10, decoration: BoxDecoration(color: statusColor(st), shape: BoxShape.circle)),
+                          backgroundColor: C.card,
+                          side: BorderSide(color: st == 'cancelled' ? C.danger : C.ink),
+                          onPressed: busy ? null : () => _confirmSet(st),
+                        ),
+                    ]),
+                  ],
                   if (history.isNotEmpty) ...[
                     const SizedBox(height: 14),
                     Text(tr('سجل الطلب', 'HISTORY'), style: TextStyle(fontSize: 11, color: C.mute, letterSpacing: 1.4)),
