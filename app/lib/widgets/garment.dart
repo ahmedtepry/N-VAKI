@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import '../core/app.dart';
 import '../core/models.dart';
 import '../core/theme.dart';
 
@@ -310,7 +311,7 @@ class GarmentPainter extends CustomPainter {
   }
 
   void _brand(Canvas c, double x, double y, double size, Color col) {
-    final tp = TextPainter(text: TextSpan(text: 'NŌVAKI', style: TextStyle(fontSize: size, fontWeight: FontWeight.w900, letterSpacing: size * 0.22, color: col)), textDirection: TextDirection.ltr)..layout();
+    final tp = TextPainter(text: TextSpan(text: App.i.brand, style: TextStyle(fontSize: size, fontWeight: FontWeight.w900, letterSpacing: size * 0.22, color: col)), textDirection: TextDirection.ltr)..layout();
     tp.paint(c, Offset(x - tp.width / 2, y - tp.height / 2));
   }
 
@@ -577,7 +578,7 @@ class _GarmentViewState extends State<GarmentView> {
   String? _asked;
 
   String _key(double dpr) =>
-      '${widget.garment}|${widget.color.hashCode}|${widget.accent?.hashCode}|${(widget.width * dpr).round()}|${widget.shadow}|${widget.hanger}|${widget.back}';
+      '${widget.garment}|${widget.color.hashCode}|${widget.accent?.hashCode}|${(widget.width * dpr).round()}|${widget.shadow}|${widget.hanger}|${widget.back}|${App.i.brand}';
 
   GarmentPainter _painter() => GarmentPainter(garment: widget.garment, color: widget.color, accent: widget.accent, shadow: widget.shadow, hanger: widget.hanger, back: widget.back);
 

@@ -8,7 +8,7 @@ import 'theme.dart';
 
 const kSupabaseUrl = String.fromEnvironment('SUPABASE_URL');
 const kSupabaseKey = String.fromEnvironment('SUPABASE_ANON_KEY');
-const kBrand = 'NŌVAKI';
+const kBrand = 'NŌVAKI'; // default; the owner can rename the app live (see App.brand)
 
 final GlobalKey<ScaffoldMessengerState> messengerKey = GlobalKey<ScaffoldMessengerState>();
 
@@ -49,6 +49,7 @@ class App extends ChangeNotifier {
     prefs = p;
     lang = p.getString('lang') ?? 'ar';
     C.apply(p.getString('palette') ?? 'burgundy');
+    _brandCache = p.getString('brand');
     _loadCart();
     favs.addAll(p.getStringList('favs') ?? const <String>[]);
     db.auth.onAuthStateChange.listen((s) {
@@ -61,6 +62,20 @@ class App extends ChangeNotifier {
       }
     });
     loadSettings();
+    // owner changes (app name, colours...) reach everyone who has the app open, instantly
+    try {
+      db.from('app_settings').stream(primaryKey: ['key']).listen((rows) {
+        if (rows.isEmpty) return;
+        settings = {for (final r in rows) r['key'] as String: r['value'] as String};
+        if (settings['brand_name'] != null) prefs.setString('brand', settings['brand_name']!);
+        final th = settings['theme'];
+        if (th != null && th != C.current) {
+          setPalette(th);
+        } else {
+          notifyListeners();
+        }
+      }, onError: (_) {});
+    } catch (_) {}
   }
 
   void setLang(String l) {
@@ -81,6 +96,7 @@ class App extends ChangeNotifier {
     try {
       final rows = await db.from('app_settings').select();
       settings = {for (final r in rows) r['key'] as String: r['value'] as String};
+      if (settings['brand_name'] != null) prefs.setString('brand', settings['brand_name']!);
       final th = settings['theme'];
       if (th != null && th != C.current) setPalette(th);
       final cats = await db.from('categories').select().eq('active', true).order('sort');
@@ -101,6 +117,8 @@ class App extends ChangeNotifier {
   List<String> get perms => role == 'owner' ? allPerms : ((profile?['perms'] as List?) ?? const []).map((e) => '$e').toList();
   bool can(String p) => isStaff && perms.contains(p);
 
+  String? _brandCache;
+  String get brand => settings['brand_name'] ?? _brandCache ?? kBrand;
   String get walletNumber => settings['wallet_number'] ?? '01118819464';
   double get shippingFee => double.tryParse(settings['shipping_fee'] ?? '') ?? 60;
   double get freeOver => double.tryParse(settings['free_shipping_over'] ?? '') ?? 1500;

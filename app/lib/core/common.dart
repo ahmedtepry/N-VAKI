@@ -25,6 +25,8 @@ String friendly(Object e) {
   if (has('cart_empty')) return tr('الشنطة فاضية.', 'Your bag is empty.');
   if (has('invalid_input')) return tr('راجع البيانات المدخلة.', 'Please check the details.');
   if (has('cannot_cancel')) return tr('الطلب اتأكد ومينفعش يتلغى من هنا. كلم الدعم.', 'This order is confirmed. Contact support to cancel.');
+  if (has('wrong_code')) return tr('الرمز السري غلط.', 'Wrong secret code.');
+  if (has('locked')) return tr('محاولات كتير غلط. جرّب بعد 10 دقايق.', 'Too many wrong tries. Try again in 10 minutes.');
   if (has('forbidden')) return tr('مفيش صلاحية للإجراء ده.', 'You do not have permission for that.');
   if (has('not_found')) return tr('مش لاقيين الحساب أو العنصر ده.', 'Could not find that account or item.');
   if (has('already_registered') || has('already') && has('regist')) return tr('الإيميل ده متسجل قبل كده.', 'This email is already registered.');
@@ -49,7 +51,7 @@ class Wordmark extends StatelessWidget {
   const Wordmark({this.size = 20, this.color});
   @override
   Widget build(BuildContext context) => Text(
-        kBrand,
+        App.i.brand,
         style: TextStyle(fontSize: size, fontWeight: FontWeight.w900, letterSpacing: size * 0.18, color: color ?? C.ink, height: 1),
       );
 }

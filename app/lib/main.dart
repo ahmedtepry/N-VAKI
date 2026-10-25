@@ -29,7 +29,7 @@ class NovakiApp extends StatelessWidget {
       builder: (context, _) {
         final ar = App.i.ar;
         return MaterialApp(
-          title: kBrand,
+          title: App.i.brand,
           debugShowCheckedModeBanner: false,
           scaffoldMessengerKey: messengerKey,
           locale: Locale(App.i.lang),
@@ -37,7 +37,7 @@ class NovakiApp extends StatelessWidget {
           localizationsDelegates: const [GlobalMaterialLocalizations.delegate, GlobalWidgetsLocalizations.delegate, GlobalCupertinoLocalizations.delegate],
           theme: _themes.putIfAbsent('${C.current}-$ar', () => buildTheme(ar)),
           // a language switch rebuilds the whole tree so every tr() string refreshes
-          builder: (context, child) => KeyedSubtree(key: ValueKey('${App.i.lang}-${C.current}'), child: child ?? const SizedBox()),
+          builder: (context, child) => KeyedSubtree(key: ValueKey('${App.i.lang}-${C.current}-${App.i.brand}'), child: child ?? const SizedBox()),
           home: const SplashScreen(),
         );
       },

@@ -146,6 +146,8 @@ class Api {
 
   static Future<List<Json>> coupons() async => (await db.from('coupons').select().order('created_at', ascending: false)).map((e) => Json.from(e)).toList();
 
+  static Future<void> setBrandName(String name, String code) async => db.rpc('set_brand_name', params: {'p_name': name, 'p_code': code});
+
   static Future<void> saveSetting(String key, String value) async => db.from('app_settings').upsert({'key': key, 'value': value});
 
   // ---- customers & team ----

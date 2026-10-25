@@ -104,7 +104,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                                     heightFactor: print.clamp(0.001, 1.0),
                                     child: SizedBox(
                                       height: th * 0.2,
-                                      child: Center(child: Text(kBrand, style: TextStyle(fontSize: tw * 0.12, fontWeight: FontWeight.w900, letterSpacing: tw * 0.02, color: C.neon, height: 1))),
+                                      child: Center(child: Text(App.i.brand, style: TextStyle(fontSize: tw * 0.12, fontWeight: FontWeight.w900, letterSpacing: tw * 0.02, color: C.neon, height: 1))),
                                     ),
                                   ),
                                 ),

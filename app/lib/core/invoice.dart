@@ -56,7 +56,7 @@ Future<Uint8List> orderInvoicePdf(Json o, {bool staff = true, String? driverName
             pw.Text(fmtDate(o['created_at']), textDirection: pw.TextDirection.ltr, style: const pw.TextStyle(fontSize: 10, color: PdfColors.white)),
           ]),
           pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.end, children: [
-            pw.Text('NŌVAKI', style: pw.TextStyle(font: bold, fontSize: 20, color: _rose)),
+            pw.Text(App.i.brand, style: pw.TextStyle(font: bold, fontSize: 20, color: _rose)),
             pw.SizedBox(height: 4),
             pw.Text('#${o['order_no']}', textDirection: pw.TextDirection.ltr, style: pw.TextStyle(font: bold, fontSize: 14, color: PdfColors.white)),
           ]),
@@ -118,7 +118,7 @@ Future<Uint8List> orderInvoicePdf(Json o, {bool staff = true, String? driverName
       ],
       pw.SizedBox(height: 14),
       pw.Divider(color: _line),
-      pw.Text('شكرًا لاختيارك NŌVAKI', style: const pw.TextStyle(color: _grey, fontSize: 10)),
+      pw.Text('شكرًا لاختيارك ${App.i.brand}', style: const pw.TextStyle(color: _grey, fontSize: 10)),
     ],
   ));
   return doc.save();

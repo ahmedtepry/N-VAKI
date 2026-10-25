@@ -524,11 +524,48 @@ class _SettingsTabState extends State<SettingsTab> {
   late final tickAr = TextEditingController(text: (App.i.settings['ticker_ar'] ?? '').split('|').join('\n'));
   late final tickEn = TextEditingController(text: (App.i.settings['ticker_en'] ?? '').split('|').join('\n'));
   late bool open = App.i.storeOpen;
+  late final brandCtl = TextEditingController(text: App.i.brand);
   bool busy = false;
+
+  Future<void> _renameApp() async {
+    final name = brandCtl.text.trim();
+    if (name.length < 2 || name.length > 24) {
+      toast(tr('الاسم من حرفين لحد 24 حرف', 'The name must be 2 to 24 characters'));
+      return;
+    }
+    if (name == App.i.brand) return;
+    final code = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: C.bg,
+        title: Text(tr('تأكيد بالرمز السري', 'Confirm with secret code')),
+        content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(tr('هيتغيّر اسم التطبيق لكل الناس فورًا إلى "$name".', 'The app name changes for everyone instantly to "$name".'), style: const TextStyle(height: 1.45)),
+          const SizedBox(height: 10),
+          TextField(controller: code, obscureText: true, autofocus: true, textDirection: TextDirection.ltr, decoration: InputDecoration(labelText: tr('الرمز السري', 'Secret code'))),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('رجوع', 'Back'), style: TextStyle(color: C.mute))),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('غيّر الاسم', 'Rename'), style: const TextStyle(fontWeight: FontWeight.w800))),
+        ],
+      ),
+    );
+    final secret = code.text;
+    code.dispose();
+    if (ok != true) return;
+    try {
+      await Api.setBrandName(name, secret);
+      await App.i.loadSettings();
+      toast(tr('اتغيّر اسم التطبيق ✓', 'App renamed ✓'));
+    } catch (e) {
+      toastError(e);
+    }
+  }
 
   @override
   void dispose() {
-    for (final c in [ship, free, hoursAr, hoursEn, tickAr, tickEn]) {
+    for (final c in [ship, free, hoursAr, hoursEn, tickAr, tickEn, brandCtl]) {
       c.dispose();
     }
     super.dispose();
@@ -571,6 +608,17 @@ class _SettingsTabState extends State<SettingsTab> {
           _sw(open, (v) => setState(() => open = v)),
         ]),
       ),
+      if (App.i.role == 'owner') ...[
+        _label(tr('اسم التطبيق (المالك فقط)', 'App name (owner only)')),
+        _card(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            TextField(controller: brandCtl, maxLength: 24, decoration: InputDecoration(labelText: tr('الاسم الجديد', 'New name'))),
+            Text(tr('بيتغيّر في الشعار وشاشة البداية والفواتير والتطبيق كله. الاسم تحت أيقونة الموبايل بيتغيّر مع نسخة جديدة من التطبيق بس.', 'Changes the logo, splash, invoices and the whole app. The name under the phone icon only changes with a new app build.'), style: TextStyle(color: C.mute, fontSize: 12, height: 1.4)),
+            const SizedBox(height: 10),
+            NeonButton(tr('غيّر الاسم', 'Rename app'), icon: Icons.drive_file_rename_outline, onPressed: _renameApp),
+          ]),
+        ),
+      ],
       if (App.i.can('settings_edit')) ...[
         _label(tr('ألوان التطبيق (بتتغير عند كل العملاء)', 'App colours (changes for every customer)')),
         SizedBox(
