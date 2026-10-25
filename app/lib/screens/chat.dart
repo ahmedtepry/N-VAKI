@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/api.dart';
 import '../core/app.dart';
 import '../core/common.dart';
+import '../core/models.dart';
 import '../core/theme.dart';
 
 /// Live support chat. Customers: opens/continues their conversation. Staff: pass [convId] + [staff].
