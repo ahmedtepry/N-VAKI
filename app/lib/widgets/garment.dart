@@ -1,17 +1,48 @@
 import 'dart:math' as math;
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import '../core/models.dart';
+import '../core/theme.dart';
 
-/// Draws a garment hanging on a hanger, in vector. The colour/accent come from the product variant.
+/// Notifies listeners once per animation frame (drives the swing physics without rebuilding whole screens).
+class Frame extends ChangeNotifier {
+  void bump() => notifyListeners();
+}
+
+/// Damped pendulum used to make garments swing from their hanger.
+class Swing {
+  double a = 0, v = 0;
+  void step(double dt) {
+    var t = dt;
+    while (t > 0) {
+      final h = math.min(t, 1 / 120);
+      v += (-22 * a - 1.5 * v) * h;
+      a += v * h;
+      t -= h;
+    }
+    a = clampD(a, -0.6, 0.6);
+  }
+
+  void kick(double x) => v += x;
+}
+
+/// Draws a garment hanging on a wooden hanger, fully in vector: fabric shading, folds, seams and stitching.
 class GarmentPainter extends CustomPainter {
   final String garment;
   final Color color;
   final Color? accent;
   final double swing; // radians, rotates around the hook
   final bool shadow;
-  GarmentPainter({required this.garment, required this.color, this.accent, this.swing = 0, this.shadow = true});
+  final bool hangerOnly;
+  GarmentPainter({required this.garment, required this.color, this.accent, this.swing = 0, this.shadow = true, this.hangerOnly = false});
 
   static const double W = 100, H = 118;
+  static const _rect = Rect.fromLTWH(0, 0, W, H);
+
+  bool get _dark => isDark(color);
+  Color get _rib => shade(color, _dark ? 0.09 : -0.12);
+  Color get _stitch => _dark ? Colors.white.withValues(alpha: 0.28) : Colors.black.withValues(alpha: 0.26);
+  bool get _long => garment == 'hoodie' || garment == 'jacket' || garment == 'shirt';
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -19,277 +50,449 @@ class GarmentPainter extends CustomPainter {
     canvas.save();
     canvas.translate((size.width - W * s) / 2, 0);
     canvas.scale(s);
-    canvas.translate(50, 4);
+    canvas.translate(50, 3);
     canvas.rotate(swing);
-    canvas.translate(-50, -4);
+    canvas.translate(-50, -3);
 
-    final body = _body();
+    if (hangerOnly) {
+      _arms(canvas);
+      _hook(canvas);
+      canvas.restore();
+      return;
+    }
+
+    final torso = _torso();
+    final sleeves = _long ? [_sleeve(false), _sleeve(true)] : <Path>[];
+    var sil = torso;
+    for (final sl in sleeves) {
+      sil = Path.combine(PathOperation.union, sil, sl);
+    }
+
     if (shadow) {
       canvas.save();
-      canvas.translate(-5, 5);
-      canvas.drawPath(body, Paint()..color = Colors.black.withValues(alpha: 0.13)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.5));
+      canvas.translate(-7, 6);
+      canvas.drawPath(sil, Paint()..color = Colors.black.withValues(alpha: 0.14)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5));
       canvas.restore();
     }
-    _hanger(canvas);
+    _arms(canvas);
     if (garment == 'hoodie') _hood(canvas);
 
-    canvas.drawPath(body, Paint()..color = color);
-    // fabric shading
-    canvas.drawPath(
-      body,
+    // sleeves sit behind the torso's front edge but over the body: draw torso first, then sleeves
+    _fabric(canvas, torso, color);
+    _torsoFolds(canvas, torso);
+    for (final sl in sleeves) {
+      _fabric(canvas, sl, shade(color, _dark ? 0.015 : -0.025));
+      canvas.drawPath(sl, Paint()..style = PaintingStyle.stroke..strokeWidth = 0.9..color = Colors.black.withValues(alpha: 0.2));
+    }
+    if (_long) _sleeveFolds(canvas, sleeves);
+
+    canvas.save();
+    canvas.clipPath(sil);
+    _details(canvas);
+    canvas.restore();
+    _hook(canvas);
+
+    canvas.drawPath(sil, Paint()..style = PaintingStyle.stroke..strokeWidth = 0.7..strokeJoin = StrokeJoin.round..color = Colors.black.withValues(alpha: 0.24));
+    canvas.restore();
+  }
+
+  // ------------------------------------------------------------------ shapes
+  Path _torso() {
+    final p = Path();
+    if (_long) {
+      p.moveTo(39, 13);
+      p.quadraticBezierTo(26, 17, 15, 25);
+      p.lineTo(24, 50);
+      p.cubicTo(25, 74, 21, 96, 22, 106);
+      p.quadraticBezierTo(50, 110, 78, 106);
+      p.cubicTo(79, 96, 75, 74, 76, 50);
+      p.lineTo(85, 25);
+      p.quadraticBezierTo(74, 17, 61, 13);
+      if (garment == 'shirt') {
+        p.lineTo(50, 30);
+        p.lineTo(39, 13);
+      } else {
+        p.cubicTo(57, 28, 43, 28, 39, 13);
+      }
+      p.close();
+      return p;
+    }
+    p.moveTo(39, 13);
+    p.quadraticBezierTo(26, 17, 15, 25);
+    p.quadraticBezierTo(6, 34, 2, 47);
+    p.lineTo(19, 55);
+    p.quadraticBezierTo(20, 50, 24, 47);
+    p.cubicTo(26, 70, 21, 92, 22, 105);
+    p.quadraticBezierTo(50, 109, 78, 105);
+    p.cubicTo(79, 92, 74, 70, 76, 47);
+    p.quadraticBezierTo(80, 50, 81, 55);
+    p.lineTo(98, 47);
+    p.quadraticBezierTo(94, 34, 85, 25);
+    p.quadraticBezierTo(74, 17, 61, 13);
+    if (garment == 'jersey') {
+      p.lineTo(50, 34);
+      p.lineTo(39, 13);
+    } else {
+      p.cubicTo(57, 28, 43, 28, 39, 13);
+    }
+    p.close();
+    return p;
+  }
+
+  Path _sleeve(bool right) {
+    final p = Path()
+      ..moveTo(15, 25)
+      ..quadraticBezierTo(7, 52, 5, 85)
+      ..lineTo(20, 90)
+      ..quadraticBezierTo(20, 68, 25, 50)
+      ..close();
+    return right ? _mirror(p) : p;
+  }
+
+  Path _mirror(Path p) => p.transform(Float64List.fromList(<double>[-1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 100, 0, 0, 1]));
+
+  // ------------------------------------------------------------------ fabric
+  void _fabric(Canvas c, Path p, Color base) {
+    c.save();
+    c.clipPath(p);
+    c.drawPath(p, Paint()..color = base);
+    c.drawPath(
+      p,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Colors.white.withValues(alpha: 0.10), Colors.transparent, Colors.black.withValues(alpha: 0.13)],
+          stops: const [0, 0.45, 1],
+        ).createShader(_rect),
+    );
+    c.drawPath(
+      p,
       Paint()
         ..shader = LinearGradient(
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
-          colors: [Colors.white.withValues(alpha: 0.12), Colors.transparent, Colors.black.withValues(alpha: 0.16)],
-          stops: const [0, 0.5, 1],
-        ).createShader(const Rect.fromLTWH(0, 0, W, H)),
+          colors: [Colors.white.withValues(alpha: 0.10), Colors.transparent, Colors.black.withValues(alpha: 0.17)],
+          stops: const [0, 0.55, 1],
+        ).createShader(_rect),
     );
-    _details(canvas, body);
-    canvas.drawPath(
-      body,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 0.7
-        ..strokeJoin = StrokeJoin.round
-        ..color = Colors.black.withValues(alpha: 0.18),
-    );
-    canvas.restore();
+    // inner edge vignette makes the cloth look puffed
+    c.drawPath(p, Paint()..style = PaintingStyle.stroke..strokeWidth = 7..color = Colors.black.withValues(alpha: 0.2)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4));
+    c.restore();
   }
 
-  Path _body() {
-    final p = Path();
-    switch (garment) {
-      case 'hoodie':
-      case 'jacket':
-        p
-          ..moveTo(40, 14)
-          ..lineTo(14, 25)
-          ..lineTo(6, 78)
-          ..lineTo(20, 82)
-          ..lineTo(24, 48)
-          ..lineTo(23, 104)
-          ..lineTo(77, 104)
-          ..lineTo(76, 48)
-          ..lineTo(80, 82)
-          ..lineTo(94, 78)
-          ..lineTo(86, 25)
-          ..lineTo(60, 14)
-          ..quadraticBezierTo(50, 24, 40, 14)
-          ..close();
-        break;
-      case 'shirt':
-        p
-          ..moveTo(40, 13)
-          ..lineTo(15, 25)
-          ..lineTo(8, 80)
-          ..lineTo(21, 83)
-          ..lineTo(25, 47)
-          ..lineTo(24, 106)
-          ..lineTo(76, 106)
-          ..lineTo(75, 47)
-          ..lineTo(79, 83)
-          ..lineTo(92, 80)
-          ..lineTo(85, 25)
-          ..lineTo(60, 13)
-          ..lineTo(50, 22)
-          ..close();
-        break;
-      case 'jersey':
-        p
-          ..moveTo(38, 14)
-          ..lineTo(14, 25)
-          ..lineTo(3, 46)
-          ..lineTo(19, 53)
-          ..lineTo(24, 44)
-          ..lineTo(23, 106)
-          ..lineTo(77, 106)
-          ..lineTo(76, 44)
-          ..lineTo(81, 53)
-          ..lineTo(97, 46)
-          ..lineTo(86, 25)
-          ..lineTo(62, 14)
-          ..lineTo(50, 33)
-          ..close();
-        break;
-      default: // tee
-        p
-          ..moveTo(38, 14)
-          ..lineTo(14, 25)
-          ..lineTo(3, 46)
-          ..lineTo(19, 53)
-          ..lineTo(24, 44)
-          ..lineTo(23, 106)
-          ..lineTo(77, 106)
-          ..lineTo(76, 44)
-          ..lineTo(81, 53)
-          ..lineTo(97, 46)
-          ..lineTo(86, 25)
-          ..lineTo(62, 14)
-          ..quadraticBezierTo(50, 28, 38, 14)
-          ..close();
+  void _soft(Canvas c, Path p, double w, double alpha, {Color col = Colors.black, double blur = 1.8}) {
+    c.drawPath(p, Paint()..style = PaintingStyle.stroke..strokeWidth = w..strokeCap = StrokeCap.round..color = col.withValues(alpha: alpha)..maskFilter = MaskFilter.blur(BlurStyle.normal, blur));
+  }
+
+  void _torsoFolds(Canvas c, Path torso) {
+    c.save();
+    c.clipPath(torso);
+    // armpit pockets of shadow
+    for (final o in const [Offset(25, 52), Offset(75, 52)]) {
+      c.drawCircle(o, 8, Paint()..color = Colors.black.withValues(alpha: 0.22)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6));
     }
-    return p;
+    // neck shadow
+    c.drawOval(const Rect.fromLTWH(36, 12, 28, 14), Paint()..color = Colors.black.withValues(alpha: 0.16)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4));
+    final f1 = Path()..moveTo(34, 48)..cubicTo(39, 62, 33, 82, 36, 102);
+    final f2 = Path()..moveTo(63, 52)..cubicTo(58, 68, 64, 86, 60, 104);
+    final f3 = Path()..moveTo(46, 40)..cubicTo(49, 58, 45, 78, 48, 100);
+    final f4 = Path()..moveTo(27, 62)..quadraticBezierTo(33, 66, 40, 63);
+    _soft(c, f1, 3.2, 0.10);
+    _soft(c, f2, 3.2, 0.11);
+    _soft(c, f4, 2.4, 0.07);
+    _soft(c, f3, 2.6, 0.09, col: Colors.white);
+    _soft(c, f1.shift(const Offset(1.8, 0)), 1.4, 0.07, col: Colors.white, blur: 1);
+    // hem shadow
+    c.drawRect(const Rect.fromLTWH(18, 99, 64, 14), Paint()..shader = LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Colors.black.withValues(alpha: 0.12)]).createShader(const Rect.fromLTWH(18, 99, 64, 14)));
+    c.restore();
   }
 
-  void _hanger(Canvas canvas) {
-    final hp = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.3
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round
-      ..color = const Color(0xFF6E6B65);
+  void _sleeveFolds(Canvas c, List<Path> sleeves) {
+    for (var i = 0; i < sleeves.length; i++) {
+      c.save();
+      c.clipPath(sleeves[i]);
+      final dx = i == 0 ? 0.0 : 0.0;
+      final f = i == 0 ? (Path()..moveTo(13, 36)..cubicTo(11, 52, 14, 66, 12, 82)) : (Path()..moveTo(87, 36)..cubicTo(89, 52, 86, 66, 88, 82));
+      final g = i == 0 ? (Path()..moveTo(18, 40)..cubicTo(17, 54, 19, 64, 17, 76)) : (Path()..moveTo(82, 40)..cubicTo(83, 54, 81, 64, 83, 76));
+      _soft(c, f.shift(Offset(dx, 0)), 3, 0.12);
+      _soft(c, g, 2.2, 0.09, col: Colors.white);
+      c.restore();
+    }
+  }
+
+  // ------------------------------------------------------------------ hanger
+  void _arms(Canvas c) {
+    final arms = Path()
+      ..moveTo(12, 28)
+      ..cubicTo(26, 22, 40, 15, 50, 11)
+      ..cubicTo(60, 15, 74, 22, 88, 28);
+    c.drawPath(arms, Paint()..style = PaintingStyle.stroke..strokeWidth = 3.4..strokeCap = StrokeCap.round..color = const Color(0xFF6B4A2B));
+    c.drawPath(arms, Paint()..style = PaintingStyle.stroke..strokeWidth = 2.3..strokeCap = StrokeCap.round..color = const Color(0xFFC49A6C));
+    c.drawPath(arms.shift(const Offset(0, -0.5)), Paint()..style = PaintingStyle.stroke..strokeWidth = 0.7..strokeCap = StrokeCap.round..color = Colors.white.withValues(alpha: 0.35));
+  }
+
+  void _hook(Canvas c) {
     final hook = Path()
       ..moveTo(50, 12)
-      ..lineTo(50, 7)
-      ..quadraticBezierTo(50, 3, 54, 3)
-      ..quadraticBezierTo(58, 3, 58, 6.5);
-    canvas.drawPath(hook, hp);
-    final arms = Path()
-      ..moveTo(15, 26)
-      ..lineTo(50, 11)
-      ..lineTo(85, 26);
-    canvas.drawPath(arms, hp..strokeWidth = 1.6);
+      ..lineTo(50, 7.5)
+      ..cubicTo(50, 2.5, 57.5, 2.5, 57.5, 6.2);
+    c.drawPath(hook, Paint()..style = PaintingStyle.stroke..strokeWidth = 1.7..strokeCap = StrokeCap.round..color = const Color(0xFF5E5E5E));
+    c.drawPath(hook, Paint()..style = PaintingStyle.stroke..strokeWidth = 0.8..strokeCap = StrokeCap.round..color = const Color(0xFFD9D9D9));
   }
 
-  void _hood(Canvas canvas) {
+  void _hood(Canvas c) {
     final hood = Path()
-      ..moveTo(35, 17)
-      ..cubicTo(28, 0, 72, 0, 65, 17)
-      ..quadraticBezierTo(50, 34, 35, 17)
+      ..moveTo(32, 20)
+      ..cubicTo(25, 6, 38, 3, 50, 3.5)
+      ..cubicTo(62, 3, 75, 6, 68, 20)
+      ..quadraticBezierTo(50, 36, 32, 20)
       ..close();
-    canvas.drawPath(hood, Paint()..color = shade(color, -0.06));
-    canvas.drawPath(hood, Paint()..style = PaintingStyle.stroke..strokeWidth = 0.7..color = Colors.black.withValues(alpha: 0.18));
-    // hood opening
+    _fabric(c, hood, shade(color, _dark ? 0.02 : -0.05));
+    c.drawPath(hood, Paint()..style = PaintingStyle.stroke..strokeWidth = 0.7..color = Colors.black.withValues(alpha: 0.24));
+    // dark opening
     final inner = Path()
-      ..moveTo(40, 14)
-      ..quadraticBezierTo(50, 24, 60, 14)
-      ..quadraticBezierTo(50, 8, 40, 14)
+      ..moveTo(39, 14)
+      ..quadraticBezierTo(50, 26, 61, 14)
+      ..quadraticBezierTo(50, 8, 39, 14)
       ..close();
-    canvas.drawPath(inner, Paint()..color = Colors.black.withValues(alpha: 0.35));
+    c.drawPath(inner, Paint()..color = Colors.black.withValues(alpha: 0.42));
   }
 
-  Paint _line(Color c, double w) => Paint()
-    ..style = PaintingStyle.stroke
-    ..strokeWidth = w
-    ..strokeCap = StrokeCap.round
-    ..color = c;
+  // ------------------------------------------------------------------ details
+  Path _dash(Path src, double on, double off) {
+    final out = Path();
+    for (final m in src.computeMetrics()) {
+      var d = 0.0;
+      while (d < m.length) {
+        out.addPath(m.extractPath(d, math.min(d + on, m.length)), Offset.zero);
+        d += on + off;
+      }
+    }
+    return out;
+  }
 
-  void _details(Canvas canvas, Path body) {
-    final fold = _line(Colors.black.withValues(alpha: 0.07), 1.4);
-    final light = _line(Colors.white.withValues(alpha: 0.10), 1.2);
-    canvas.drawPath(Path()..moveTo(33, 52)..quadraticBezierTo(37, 78, 32, 102), fold);
-    canvas.drawPath(Path()..moveTo(66, 56)..quadraticBezierTo(62, 80, 68, 103), fold);
-    canvas.drawPath(Path()..moveTo(45, 48)..quadraticBezierTo(48, 74, 44, 100), light);
-    final rib = shade(color, isDark(color) ? 0.10 : -0.14);
+  Paint _ln(Color c, double w) => Paint()..style = PaintingStyle.stroke..strokeWidth = w..strokeCap = StrokeCap.round..strokeJoin = StrokeJoin.round..color = c;
+
+  void _stitchLine(Canvas c, Path p) => c.drawPath(_dash(p, 1.1, 0.9), _ln(_stitch, 0.55));
+
+  void _neckBack(Canvas c, {double depth = 28}) {
+    final back = Path()
+      ..moveTo(39, 13)
+      ..cubicTo(43, 15.5, 57, 15.5, 61, 13)
+      ..cubicTo(57, depth, 43, depth, 39, 13)
+      ..close();
+    c.drawPath(back, Paint()..color = shade(color, -0.22).withValues(alpha: 0.9));
+  }
+
+  void _ribBand(Canvas c, Path band, {bool vertical = true}) {
+    c.save();
+    c.clipPath(band);
+    c.drawPath(band, Paint()..color = _rib);
+    final lc = _dark ? Colors.white.withValues(alpha: 0.10) : Colors.black.withValues(alpha: 0.10);
+    final b = band.getBounds();
+    for (var x = b.left; x < b.right; x += 2.2) {
+      c.drawLine(Offset(x, b.top), Offset(x, b.bottom), _ln(lc, 0.7));
+    }
+    c.restore();
+    c.drawPath(band, _ln(Colors.black.withValues(alpha: 0.18), 0.6));
+  }
+
+  void _brand(Canvas c, double x, double y, double size, Color col) {
+    final tp = TextPainter(text: TextSpan(text: 'NŌVAKI', style: TextStyle(fontSize: size, fontWeight: FontWeight.w900, letterSpacing: size * 0.22, color: col)), textDirection: TextDirection.ltr)..layout();
+    tp.paint(c, Offset(x - tp.width / 2, y - tp.height / 2));
+  }
+
+  void _number(Canvas c, String t, double x, double y, double size, Color fill, Color stroke) {
+    final style = TextStyle(fontSize: size, fontWeight: FontWeight.w900, letterSpacing: 1);
+    final o = TextPainter(text: TextSpan(text: t, style: style.copyWith(foreground: Paint()..style = PaintingStyle.stroke..strokeWidth = size * 0.16..color = stroke)), textDirection: TextDirection.ltr)..layout();
+    final f = TextPainter(text: TextSpan(text: t, style: style.copyWith(color: fill)), textDirection: TextDirection.ltr)..layout();
+    o.paint(c, Offset(x - o.width / 2, y - o.height / 2));
+    f.paint(c, Offset(x - f.width / 2, y - f.height / 2));
+  }
+
+  void _details(Canvas c) {
     final a = accent;
-
     switch (garment) {
       case 'tee':
-        canvas.drawPath(Path()..moveTo(38, 14)..quadraticBezierTo(50, 28, 62, 14), _line(rib, 2.6));
-        canvas.drawPath(Path()..moveTo(3, 46)..lineTo(19, 53), _line(rib, 1.6));
-        canvas.drawPath(Path()..moveTo(97, 46)..lineTo(81, 53), _line(rib, 1.6));
-        // small back-print style mark on the chest
-        _text(canvas, a != null ? 'N' : '', 50, 62, 15, a ?? Colors.transparent);
+        _neckBack(c);
+        c.drawPath(Path()..moveTo(39, 13)..cubicTo(43, 26, 57, 26, 61, 13), _ln(_rib, 2.4));
+        c.drawPath(Path()..moveTo(39, 13)..cubicTo(43, 24, 57, 24, 61, 13), _ln(Colors.black.withValues(alpha: 0.16), 0.5));
+        c.drawRect(const Rect.fromLTWH(46, 13.2, 8, 3.2), Paint()..color = Colors.white.withValues(alpha: 0.75));
+        c.drawPath(Path()..moveTo(15, 25)..quadraticBezierTo(21, 38, 24, 47), _ln(Colors.black.withValues(alpha: 0.13), 0.7));
+        c.drawPath(Path()..moveTo(85, 25)..quadraticBezierTo(79, 38, 76, 47), _ln(Colors.black.withValues(alpha: 0.13), 0.7));
+        _stitchLine(c, Path()..moveTo(2.8, 51)..lineTo(19.2, 58.2));
+        _stitchLine(c, Path()..moveTo(97.2, 51)..lineTo(80.8, 58.2));
+        _stitchLine(c, Path()..moveTo(23, 102)..quadraticBezierTo(50, 105.5, 77, 102));
+        if (a != null) {
+          _brand(c, 37, 34, 3.6, a);
+          _number(c, 'N', 50, 66, 20, a, Colors.black.withValues(alpha: 0.0));
+        }
         break;
       case 'jersey':
         final ac = a ?? const Color(0xFF1E9E48);
-        // side panels
-        canvas.drawPath(Path()..moveTo(24, 46)..lineTo(23, 106)..lineTo(31, 106)..lineTo(30, 49)..close(), Paint()..color = ac);
-        canvas.drawPath(Path()..moveTo(76, 46)..lineTo(77, 106)..lineTo(69, 106)..lineTo(70, 49)..close(), Paint()..color = ac);
-        // V-neck + sleeve trim
-        canvas.drawPath(Path()..moveTo(38, 14)..lineTo(50, 33)..lineTo(62, 14), _line(ac, 2.6));
-        canvas.drawPath(Path()..moveTo(3, 46)..lineTo(19, 53), _line(ac, 3.4));
-        canvas.drawPath(Path()..moveTo(97, 46)..lineTo(81, 53), _line(ac, 3.4));
+        final left = Path()..moveTo(24, 47)..cubicTo(26, 70, 21, 92, 22, 105)..lineTo(31, 105.6)..cubicTo(30, 92, 34, 70, 31.5, 49)..close();
+        final right = _mirror(left);
+        c.drawPath(left, Paint()..color = ac);
+        c.drawPath(right, Paint()..color = ac);
+        c.drawPath(left, _ln(Colors.black.withValues(alpha: 0.15), 0.6));
+        c.drawPath(right, _ln(Colors.black.withValues(alpha: 0.15), 0.6));
+        // sleeve bands
+        final sb = Path()..moveTo(2, 47)..lineTo(19, 55)..lineTo(18, 59.5)..lineTo(0.2, 51.5)..close();
+        c.drawPath(sb, Paint()..color = ac);
+        c.drawPath(_mirror(sb), Paint()..color = ac);
+        // V collar
+        _neckBack(c, depth: 30);
+        c.drawPath(Path()..moveTo(39, 13)..lineTo(50, 34)..lineTo(61, 13), _ln(ac, 3.4));
+        c.drawPath(Path()..moveTo(39, 13)..lineTo(50, 34)..lineTo(61, 13), _ln(Colors.black.withValues(alpha: 0.2), 0.5));
         // chest stripes
-        canvas.drawPath(Path()..moveTo(31, 66)..lineTo(69, 66), _line(ac.withValues(alpha: 0.55), 1.2));
-        canvas.drawPath(Path()..moveTo(31, 70)..lineTo(69, 70), _line(ac.withValues(alpha: 0.35), 1.2));
-        _text(canvas, '25', 50, 84, 17, ac);
+        c.drawPath(Path()..moveTo(33, 60)..lineTo(67, 60), _ln(ac.withValues(alpha: 0.65), 1.3));
+        c.drawPath(Path()..moveTo(33, 63.5)..lineTo(67, 63.5), _ln(ac.withValues(alpha: 0.4), 1.3));
+        _brand(c, 50, 52, 3.6, isDark(color) ? Colors.white.withValues(alpha: 0.85) : Colors.black.withValues(alpha: 0.7));
+        _number(c, '25', 50, 84, 21, ac, isDark(color) ? Colors.white.withValues(alpha: 0.9) : Colors.black.withValues(alpha: 0.55));
+        _stitchLine(c, Path()..moveTo(32, 102)..quadraticBezierTo(50, 105.3, 68, 102));
         break;
       case 'hoodie':
-        // hem rib + cuffs
-        canvas.drawPath(Path()..moveTo(23, 99)..lineTo(77, 99), _line(rib, 1.2));
-        canvas.drawRect(const Rect.fromLTWH(23, 99, 54, 5), Paint()..color = rib.withValues(alpha: 0.55));
-        canvas.drawPath(Path()..moveTo(8, 72)..lineTo(22, 76), _line(rib, 1.4));
-        canvas.drawPath(Path()..moveTo(92, 72)..lineTo(78, 76), _line(rib, 1.4));
-        // kangaroo pocket
-        canvas.drawPath(Path()..moveTo(31, 72)..lineTo(36, 92)..lineTo(64, 92)..lineTo(69, 72), _line(Colors.black.withValues(alpha: 0.2), 1));
+        final hem = Path()..moveTo(22.2, 98.5)..quadraticBezierTo(50, 102, 77.8, 98.5)..lineTo(78, 106)..quadraticBezierTo(50, 110, 22, 106)..close();
+        _ribBand(c, hem);
+        final cl = Path()..moveTo(5.8, 79.5)..lineTo(19.6, 84.2)..lineTo(20, 90)..lineTo(5, 85)..close();
+        _ribBand(c, cl);
+        _ribBand(c, _mirror(cl));
+        // kangaroo pouch
+        final pouch = Path()..moveTo(33, 71)..lineTo(67, 71)..lineTo(72.5, 97)..lineTo(27.5, 97)..close();
+        c.drawPath(pouch, _ln(Colors.black.withValues(alpha: 0.2), 0.9));
+        c.drawPath(Path()..moveTo(33, 71)..lineTo(28.5, 95), _ln(Colors.white.withValues(alpha: 0.10), 1.6));
+        _stitchLine(c, Path()..moveTo(34.5, 72.5)..lineTo(66, 72.5)..moveTo(34.5, 72.5)..lineTo(30.5, 94));
         // drawstrings
-        final cord = Colors.white.withValues(alpha: 0.85);
-        canvas.drawPath(Path()..moveTo(45, 24)..lineTo(44, 46), _line(cord, 1.1));
-        canvas.drawPath(Path()..moveTo(55, 24)..lineTo(56, 46), _line(cord, 1.1));
+        final cord = const Color(0xFFEDE6D6);
+        c.drawPath(Path()..moveTo(44, 23)..cubicTo(43, 32, 45, 40, 43.5, 51), _ln(Colors.black.withValues(alpha: 0.25), 2.0));
+        c.drawPath(Path()..moveTo(56, 23)..cubicTo(57, 32, 55, 40, 56.5, 51), _ln(Colors.black.withValues(alpha: 0.25), 2.0));
+        c.drawPath(Path()..moveTo(44, 23)..cubicTo(43, 32, 45, 40, 43.5, 51), _ln(cord, 1.3));
+        c.drawPath(Path()..moveTo(56, 23)..cubicTo(57, 32, 55, 40, 56.5, 51), _ln(cord, 1.3));
+        for (final o in const [Offset(43.5, 52), Offset(56.5, 52)]) {
+          c.drawCircle(o, 1.25, Paint()..color = const Color(0xFF8E8E8E));
+        }
+        if (a != null) _brand(c, 50, 63, 3.4, a);
+        c.drawPath(Path()..moveTo(15, 25)..lineTo(24, 50), _ln(Colors.black.withValues(alpha: 0.14), 0.7));
         break;
       case 'jacket':
         final ac = a ?? const Color(0xFFEFE6D2);
-        canvas.drawRect(const Rect.fromLTWH(23, 99, 54, 5), Paint()..color = rib.withValues(alpha: 0.7));
-        canvas.drawPath(Path()..moveTo(23, 99)..lineTo(77, 99), _line(ac, 1.3));
-        canvas.drawPath(Path()..moveTo(8, 72)..lineTo(22, 76), _line(ac, 1.6));
-        canvas.drawPath(Path()..moveTo(92, 72)..lineTo(78, 76), _line(ac, 1.6));
-        // collar
-        final collar = Path()
-          ..moveTo(38, 14)
-          ..lineTo(42, 8)
-          ..lineTo(58, 8)
-          ..lineTo(62, 14)
-          ..quadraticBezierTo(50, 26, 38, 14)
-          ..close();
-        canvas.drawPath(collar, Paint()..color = rib.withValues(alpha: 0.9));
-        canvas.drawPath(Path()..moveTo(41, 10)..lineTo(59, 10), _line(ac, 1.2));
+        final hem = Path()..moveTo(22.2, 98.5)..quadraticBezierTo(50, 102, 77.8, 98.5)..lineTo(78, 106)..quadraticBezierTo(50, 110, 22, 106)..close();
+        _ribBand(c, hem);
+        c.drawPath(Path()..moveTo(22.3, 100.2)..quadraticBezierTo(50, 103.7, 77.7, 100.2), _ln(ac, 1.1));
+        final cl = Path()..moveTo(5.8, 79.5)..lineTo(19.6, 84.2)..lineTo(20, 90)..lineTo(5, 85)..close();
+        _ribBand(c, cl);
+        _ribBand(c, _mirror(cl));
+        c.drawPath(Path()..moveTo(5.9, 81.5)..lineTo(19.7, 86.2), _ln(ac, 1.0));
+        c.drawPath(Path()..moveTo(94.1, 81.5)..lineTo(80.3, 86.2), _ln(ac, 1.0));
+        // standing ribbed collar
+        final col = Path()..moveTo(36.5, 15)..lineTo(40, 7.5)..quadraticBezierTo(50, 5.5, 60, 7.5)..lineTo(63.5, 15)..quadraticBezierTo(50, 28, 36.5, 15)..close();
+        _ribBand(c, col);
+        c.drawPath(Path()..moveTo(40.6, 9.6)..quadraticBezierTo(50, 7.6, 59.4, 9.6), _ln(ac, 1.1));
         // zip
-        canvas.drawPath(Path()..moveTo(50, 22)..lineTo(50, 104), _line(const Color(0xFFBDBDBD), 1.4));
-        canvas.drawCircle(const Offset(50, 30), 1.6, Paint()..color = const Color(0xFFE0E0E0));
-        // chest pockets
-        canvas.drawPath(Path()..moveTo(30, 66)..lineTo(40, 66), _line(Colors.black.withValues(alpha: 0.28), 1.1));
-        canvas.drawPath(Path()..moveTo(60, 66)..lineTo(70, 66), _line(Colors.black.withValues(alpha: 0.28), 1.1));
+        c.drawPath(Path()..moveTo(50, 25)..lineTo(50, 99), _ln(Colors.black.withValues(alpha: 0.35), 2.2));
+        c.drawPath(_dash(Path()..moveTo(50, 25)..lineTo(50, 99), 0.7, 0.6), _ln(const Color(0xFFD6D6D6), 1.3));
+        c.drawRRect(RRect.fromRectAndRadius(const Rect.fromLTWH(48.6, 24, 2.8, 6), const Radius.circular(1)), Paint()..color = const Color(0xFFBDBDBD));
+        // welt pockets
+        for (final p in [Path()..moveTo(31, 70)..lineTo(36, 88), Path()..moveTo(69, 70)..lineTo(64, 88)]) {
+          c.drawPath(p, _ln(Colors.black.withValues(alpha: 0.38), 1.6));
+          c.drawPath(p.shift(const Offset(0.9, 0)), _ln(Colors.white.withValues(alpha: 0.12), 0.8));
+        }
+        c.drawCircle(const Offset(63, 40), 3.6, Paint()..color = ac.withValues(alpha: 0.92));
+        c.drawCircle(const Offset(63, 40), 3.6, _ln(Colors.black.withValues(alpha: 0.25), 0.5));
+        _number(c, 'N', 63, 40, 5, shade(color, -0.1), Colors.transparent);
+        c.drawPath(Path()..moveTo(15, 25)..lineTo(24, 50), _ln(Colors.black.withValues(alpha: 0.14), 0.7));
         break;
       case 'shirt':
-        final lc = shade(color, isDark(color) ? 0.12 : -0.08);
-        final c1 = Path()..moveTo(40, 13)..lineTo(50, 31)..lineTo(33, 27)..close();
-        final c2 = Path()..moveTo(60, 13)..lineTo(50, 31)..lineTo(67, 27)..close();
-        canvas.drawPath(c1, Paint()..color = lc);
-        canvas.drawPath(c2, Paint()..color = lc);
-        final edge = _line(Colors.black.withValues(alpha: 0.2), 0.8);
-        canvas.drawPath(c1, edge);
-        canvas.drawPath(c2, edge);
-        canvas.drawPath(Path()..moveTo(50, 31)..lineTo(50, 106), _line(Colors.black.withValues(alpha: 0.16), 0.9));
-        final btn = Paint()..color = isDark(color) ? Colors.white.withValues(alpha: 0.8) : Colors.black.withValues(alpha: 0.35);
-        for (final y in [40.0, 54.0, 68.0, 82.0, 96.0]) {
-          canvas.drawCircle(Offset(50, y), 1.15, btn);
+        final lc = shade(color, _dark ? 0.1 : -0.07);
+        final l = Path()..moveTo(40, 11.5)..lineTo(32.5, 22)..lineTo(39.5, 36)..lineTo(50, 28.5)..close();
+        final r = _mirror(l);
+        for (final p in [l, r]) {
+          c.drawPath(p, Paint()..color = lc);
+          c.drawPath(p, _ln(Colors.black.withValues(alpha: 0.26), 0.8));
+          _stitchLine(c, p.shift(Offset(p == l ? 0.9 : -0.9, 0.9)));
         }
-        canvas.drawPath(Path()..moveTo(9, 74)..lineTo(22, 77), _line(Colors.black.withValues(alpha: 0.2), 1.2));
-        canvas.drawPath(Path()..moveTo(91, 74)..lineTo(78, 77), _line(Colors.black.withValues(alpha: 0.2), 1.2));
-        canvas.drawPath(Path()..moveTo(30, 50)..lineTo(40, 50)..lineTo(40, 60)..lineTo(30, 60)..close(), _line(Colors.black.withValues(alpha: 0.16), 0.8));
+        c.drawPath(Path()..moveTo(41, 12)..quadraticBezierTo(50, 17, 59, 12), _ln(shade(color, -0.2).withValues(alpha: 0.7), 1.6));
+        // placket + buttons
+        c.drawPath(Path()..moveTo(50, 29)..lineTo(50, 106), _ln(Colors.black.withValues(alpha: 0.18), 0.9));
+        c.drawPath(Path()..moveTo(53.2, 33)..lineTo(53.2, 106), _ln(_stitch, 0.45));
+        c.drawPath(Path()..moveTo(46.8, 33)..lineTo(46.8, 106), _ln(_stitch, 0.45));
+        final btn = _dark ? Colors.white.withValues(alpha: 0.88) : const Color(0xFFF7F4EC);
+        for (final y in const [40.0, 54.0, 68.0, 82.0, 96.0]) {
+          c.drawCircle(Offset(50, y), 1.5, Paint()..color = btn);
+          c.drawCircle(Offset(50, y), 1.5, _ln(Colors.black.withValues(alpha: 0.35), 0.4));
+          c.drawCircle(Offset(49.5, y - 0.4), 0.22, Paint()..color = Colors.black.withValues(alpha: 0.5));
+          c.drawCircle(Offset(50.5, y + 0.4), 0.22, Paint()..color = Colors.black.withValues(alpha: 0.5));
+        }
+        // chest pocket
+        final pk = Path()..moveTo(28, 50)..lineTo(41, 50)..lineTo(41, 60)..lineTo(34.5, 63)..lineTo(28, 60)..close();
+        c.drawPath(pk, _ln(Colors.black.withValues(alpha: 0.22), 0.8));
+        _stitchLine(c, pk.shift(const Offset(0.7, 0.8)));
+        // cuffs
+        final cf = Path()..moveTo(5.8, 79.5)..lineTo(19.6, 84.2)..lineTo(20, 90)..lineTo(5, 85)..close();
+        for (final p in [cf, _mirror(cf)]) {
+          c.drawPath(p, Paint()..color = shade(color, _dark ? 0.04 : -0.04));
+          c.drawPath(p, _ln(Colors.black.withValues(alpha: 0.24), 0.7));
+        }
+        c.drawCircle(const Offset(11.5, 85.5), 1.1, Paint()..color = btn);
+        c.drawCircle(const Offset(88.5, 85.5), 1.1, Paint()..color = btn);
+        c.drawPath(Path()..moveTo(15, 25)..lineTo(24, 50), _ln(Colors.black.withValues(alpha: 0.16), 0.7));
+        _stitchLine(c, Path()..moveTo(23, 103)..quadraticBezierTo(50, 107, 77, 103));
         break;
     }
-  }
-
-  void _text(Canvas canvas, String t, double cx, double cy, double size, Color c) {
-    if (t.isEmpty) return;
-    final tp = TextPainter(
-      text: TextSpan(text: t, style: TextStyle(fontSize: size, fontWeight: FontWeight.w900, color: c, letterSpacing: 1)),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    tp.paint(canvas, Offset(cx - tp.width / 2, cy - tp.height / 2));
   }
 
   @override
   bool shouldRepaint(covariant GarmentPainter o) =>
-      o.garment != garment || o.color != color || o.accent != accent || o.swing != swing || o.shadow != shadow;
+      o.garment != garment || o.color != color || o.accent != accent || o.swing != swing || o.shadow != shadow || o.hangerOnly != hangerOnly;
 }
 
+/// A garment (painted, or a real product photo when [imageUrl] is set) hanging from its hook.
 class GarmentView extends StatelessWidget {
   final String garment;
   final Color color;
   final Color? accent;
+  final String? imageUrl;
   final double swing;
   final double width;
   final bool shadow;
-  const GarmentView({required this.garment, required this.color, this.accent, this.swing = 0, required this.width, this.shadow = true});
+  const GarmentView({required this.garment, required this.color, this.accent, this.imageUrl, this.swing = 0, required this.width, this.shadow = true});
 
   @override
-  Widget build(BuildContext context) => SizedBox(
+  Widget build(BuildContext context) {
+    final h = width * GarmentPainter.H / GarmentPainter.W;
+    if (imageUrl != null && imageUrl!.isNotEmpty) {
+      return SizedBox(
         width: width,
-        height: width * GarmentPainter.H / GarmentPainter.W,
-        child: CustomPaint(painter: GarmentPainter(garment: garment, color: color, accent: accent, swing: swing, shadow: shadow)),
+        height: h,
+        child: Transform.rotate(
+          angle: swing,
+          alignment: const Alignment(0, -1),
+          child: Stack(children: [
+            Positioned.fill(child: CustomPaint(painter: GarmentPainter(garment: garment, color: color, hangerOnly: true))),
+            Positioned(
+              left: 0,
+              right: 0,
+              top: h * 0.09,
+              bottom: 0,
+              child: Image.network(
+                imageUrl!,
+                fit: BoxFit.contain,
+                alignment: Alignment.topCenter,
+                // multiplying by the page colour makes a white photo background disappear
+                color: C.bg,
+                colorBlendMode: BlendMode.multiply,
+                errorBuilder: (_, __, ___) => CustomPaint(painter: GarmentPainter(garment: garment, color: color, accent: accent, shadow: shadow)),
+              ),
+            ),
+          ]),
+        ),
       );
+    }
+    return SizedBox(
+      width: width,
+      height: h,
+      child: CustomPaint(painter: GarmentPainter(garment: garment, color: color, accent: accent, swing: swing, shadow: shadow)),
+    );
+  }
 }

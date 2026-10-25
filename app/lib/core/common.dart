@@ -87,14 +87,14 @@ class NeonButton extends StatelessWidget {
 }
 
 /// Scrolling neon strip at the bottom of the storefront.
-class Ticker extends StatefulWidget {
+class Marquee extends StatefulWidget {
   final List<String> items;
-  const Ticker(this.items);
+  const Marquee(this.items);
   @override
-  State<Ticker> createState() => _TickerState();
+  State<Marquee> createState() => _MarqueeState();
 }
 
-class _TickerState extends State<Ticker> with SingleTickerProviderStateMixin {
+class _MarqueeState extends State<Marquee> with SingleTickerProviderStateMixin {
   late final AnimationController c = AnimationController(vsync: this, duration: const Duration(seconds: 28))..repeat();
   @override
   void dispose() {
@@ -228,4 +228,18 @@ Route<T> fadeRoute<T>(Widget page) => PageRouteBuilder<T>(
       transitionDuration: const Duration(milliseconds: 260),
       reverseTransitionDuration: const Duration(milliseconds: 200),
       transitionsBuilder: (_, a, __, child) => FadeTransition(opacity: CurvedAnimation(parent: a, curve: Curves.easeOut), child: child),
+    );
+
+/// Opens a product: it scales up from slightly smaller while fading in (feels like zooming into the piece).
+Route<T> zoomRoute<T>(Widget page) => PageRouteBuilder<T>(
+      pageBuilder: (_, __, ___) => page,
+      transitionDuration: const Duration(milliseconds: 460),
+      reverseTransitionDuration: const Duration(milliseconds: 320),
+      transitionsBuilder: (_, a, __, child) {
+        final c = CurvedAnimation(parent: a, curve: Curves.easeOutCubic, reverseCurve: Curves.easeInCubic);
+        return FadeTransition(
+          opacity: c,
+          child: ScaleTransition(scale: Tween<double>(begin: 0.8, end: 1).animate(c), child: child),
+        );
+      },
     );

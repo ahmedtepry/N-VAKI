@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
 import '../core/api.dart';
 import '../core/app.dart';
 import '../core/common.dart';
@@ -222,6 +224,32 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
     }
   }
 
+  Future<void> _photo(Variant c) async {
+    try {
+      final x = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 1400, imageQuality: 85);
+      if (x == null) return;
+      final bytes = await x.readAsBytes();
+      final path = 'products/${p!.id}/${c.hex.substring(1)}-${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final bucket = App.i.db.storage.from('novaki-products');
+      await bucket.uploadBinary(path, bytes, fileOptions: const FileOptions(contentType: 'image/jpeg', upsert: true));
+      final url = bucket.getPublicUrl(path);
+      await App.i.db.from('product_variants').update({'image_url': url}).eq('product_id', p!.id).eq('color_hex', c.hex);
+      toast(tr('اتحطت الصورة ✓', 'Photo added ✓'));
+      _reload();
+    } catch (e) {
+      toastError(e);
+    }
+  }
+
+  Future<void> _removePhoto(Variant c) async {
+    try {
+      await App.i.db.from('product_variants').update({'image_url': null}).eq('product_id', p!.id).eq('color_hex', c.hex);
+      _reload();
+    } catch (e) {
+      toastError(e);
+    }
+  }
+
   Future<void> _deleteColor(Variant c) async {
     if (!await confirmDialog(context, tr('تحذف اللون ده؟', 'Delete this colour?'), body: c.color)) return;
     try {
@@ -287,6 +315,7 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
               const Spacer(),
               TextButton.icon(onPressed: _addColor, icon: const Icon(Icons.add, size: 18, color: C.ink), label: Text(tr('لون', 'Colour'), style: const TextStyle(color: C.ink, fontWeight: FontWeight.w800))),
             ]),
+            Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(tr('تقدر ترفع صورة حقيقية لكل لون (القطعة كاملة على خلفية بيضاء). هتتعلق على الشماعة بدل الرسم.', 'Upload a real photo per colour (whole garment on a white background). It will hang on the rack instead of the drawing.'), style: const TextStyle(color: C.mute, fontSize: 12, height: 1.4))),
             if (pr.colors.isEmpty) Padding(padding: const EdgeInsets.symmetric(vertical: 12), child: Text(tr('ضيف لون عشان المنتج يظهر في المتجر.', 'Add a colour so the product shows up in the store.'), style: const TextStyle(color: C.warn))),
             for (final c in pr.colors)
               Container(
@@ -298,6 +327,9 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
                     Container(width: 18, height: 18, decoration: BoxDecoration(color: hexColor(c.hex), shape: BoxShape.circle, border: Border.all(color: C.ink.withValues(alpha: 0.3)))),
                     const SizedBox(width: 8),
                     Expanded(child: Text(c.color, style: const TextStyle(fontWeight: FontWeight.w800))),
+                    if (c.image != null)
+                      IconButton(visualDensity: VisualDensity.compact, tooltip: tr('شيل الصورة', 'Remove photo'), onPressed: () => _removePhoto(c), icon: const Icon(Icons.hide_image_outlined, size: 19, color: C.mute)),
+                    IconButton(visualDensity: VisualDensity.compact, tooltip: tr('صورة', 'Photo'), onPressed: () => _photo(c), icon: Icon(c.image != null ? Icons.image : Icons.add_photo_alternate_outlined, size: 20, color: c.image != null ? C.ok : C.ink)),
                     IconButton(visualDensity: VisualDensity.compact, onPressed: () => _deleteColor(c), icon: const Icon(Icons.close, size: 18, color: C.mute)),
                   ]),
                   for (final v in pr.sizesFor(c.hex))

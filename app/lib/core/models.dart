@@ -30,9 +30,9 @@ int toI(dynamic v) => v is num ? v.toInt() : int.tryParse('$v') ?? 0;
 
 class Variant {
   final String id, colorAr, colorEn, hex, size;
-  final String? accent;
+  final String? accent, image;
   int stock;
-  Variant({required this.id, required this.colorAr, required this.colorEn, required this.hex, required this.size, this.accent, required this.stock});
+  Variant({required this.id, required this.colorAr, required this.colorEn, required this.hex, required this.size, this.accent, this.image, required this.stock});
   factory Variant.fromJson(Map<String, dynamic> j) => Variant(
         id: j['id'],
         colorAr: j['color_name_ar'],
@@ -40,6 +40,7 @@ class Variant {
         hex: (j['color_hex'] as String).toUpperCase(),
         size: j['size'],
         accent: j['accent_hex'],
+        image: j['image_url'],
         stock: toI(j['stock']),
       );
   String get color => tr(colorAr, colorEn);
@@ -114,7 +115,7 @@ class Product {
 
 class CartLine {
   final String variantId, productId, nameAr, nameEn, colorAr, colorEn, hex, garment, size;
-  final String? accent;
+  final String? accent, image;
   final double price;
   int qty;
   CartLine({
@@ -128,6 +129,7 @@ class CartLine {
     required this.garment,
     required this.size,
     this.accent,
+    this.image,
     required this.price,
     this.qty = 1,
   });
@@ -142,6 +144,7 @@ class CartLine {
         garment: j['garment'],
         size: j['size'],
         accent: j['accent'],
+        image: j['image'],
         price: toD(j['price']),
         qty: toI(j['qty']),
       );
@@ -156,6 +159,7 @@ class CartLine {
         'garment': garment,
         'size': size,
         'accent': accent,
+        'image': image,
         'price': price,
         'qty': qty,
       };

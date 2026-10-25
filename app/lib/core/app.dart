@@ -25,6 +25,7 @@ class App extends ChangeNotifier {
   Map<String, String> settings = {};
   final List<CartLine> cart = [];
   int unread = 0;
+  final Set<String> favs = {};
 
   StreamSubscription? _notifSub;
   String? _notifUser;
@@ -42,6 +43,7 @@ class App extends ChangeNotifier {
     prefs = p;
     lang = p.getString('lang') ?? 'ar';
     _loadCart();
+    favs.addAll(p.getStringList('favs') ?? const <String>[]);
     db.auth.onAuthStateChange.listen((s) {
       if (s.session == null) {
         _stopRealtime();
@@ -130,6 +132,14 @@ class App extends ChangeNotifier {
     ));
   }
 
+  // ---- favourites ----
+  bool isFav(String id) => favs.contains(id);
+  void toggleFav(String id) {
+    if (!favs.remove(id)) favs.add(id);
+    prefs.setStringList('favs', favs.toList());
+    notifyListeners();
+  }
+
   // ---- cart ----
   void _loadCart() {
     try {
@@ -169,6 +179,7 @@ class App extends ChangeNotifier {
       garment: p.garment,
       size: v.size,
       accent: v.accent,
+      image: v.image,
       price: p.price,
     ));
     _saveCart();

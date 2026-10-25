@@ -32,7 +32,7 @@ class CartScreen extends StatelessWidget {
                             width: 72,
                             height: 82,
                             decoration: BoxDecoration(color: C.card, borderRadius: BorderRadius.circular(12), border: Border.all(color: C.line)),
-                            child: Center(child: GarmentView(garment: l.garment, color: hexColor(l.hex), accent: l.accent == null ? null : hexColor(l.accent!), width: 52, shadow: false)),
+                            child: Center(child: GarmentView(garment: l.garment, color: hexColor(l.hex), accent: l.accent == null ? null : hexColor(l.accent!), imageUrl: l.image, width: 52, shadow: false)),
                           ),
                           const SizedBox(width: 14),
                           Expanded(

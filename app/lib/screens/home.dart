@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import '../core/api.dart';
 import '../core/app.dart';
 import '../core/common.dart';
@@ -13,6 +14,7 @@ import 'product.dart';
 
 const _cats = [
   ['all', 'الكل', 'All'],
+  ['fav', 'المفضلة', 'Saved'],
   ['tees', 'تيشيرتات', 'Tees'],
   ['jerseys', 'جيرسي', 'Jerseys'],
   ['hoodies', 'هوديز', 'Hoodies'],
@@ -28,42 +30,65 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   List<Product> all = [];
-  bool loading = true;
+  bool loading = true, searching = false;
   Object? error;
-  String cat = 'all';
+  String cat = 'all', query = '';
   int idx = 0;
-  final pc = PageController(viewportFraction: 0.38);
-  late final AnimationController tick = AnimationController(vsync: this, duration: const Duration(seconds: 6))..repeat();
-  double swing = 0, swingV = 0, lastPage = 0;
+  final pc = PageController(viewportFraction: 0.5);
+  final frame = Frame();
+  final search = TextEditingController();
+  late final Ticker ticker;
+  Duration last = Duration.zero;
+  double lastPage = 0, time = 0;
+  final Map<String, Swing> swings = {};
 
-  List<Product> get list => cat == 'all' ? all : all.where((p) => p.category == cat).toList();
+  List<Product> get list {
+    var l = all;
+    if (cat == 'fav') {
+      l = l.where((p) => App.i.isFav(p.id)).toList();
+    } else if (cat != 'all') {
+      l = l.where((p) => p.category == cat).toList();
+    }
+    if (query.trim().isNotEmpty) {
+      final q = query.trim().toLowerCase();
+      l = l.where((p) => p.nameAr.toLowerCase().contains(q) || p.nameEn.toLowerCase().contains(q)).toList();
+    }
+    return l;
+  }
+
+  double get page => pc.hasClients && pc.position.haveDimensions ? (pc.page ?? 0) : 0;
 
   @override
   void initState() {
     super.initState();
-    tick.addListener(_physics);
+    ticker = createTicker(_tick)..start();
     _load();
     if (App.i.profile == null && App.i.user != null) App.i.loadProfile();
   }
 
   @override
   void dispose() {
-    tick.dispose();
+    ticker.dispose();
     pc.dispose();
+    search.dispose();
+    frame.dispose();
     super.dispose();
   }
 
-  double get page => pc.hasClients && pc.position.haveDimensions ? (pc.page ?? 0) : 0;
-
-  void _physics() {
+  void _tick(Duration d) {
+    final dt = ((d - last).inMicroseconds / 1e6).clamp(0.0, 0.05);
+    last = d;
+    time = d.inMicroseconds / 1e6;
     final cur = page;
-    final v = cur - lastPage;
+    final delta = cur - lastPage;
     lastPage = cur;
-    swingV += v * 1.8;
-    swingV += -swing * 0.11;
-    swingV *= 0.9;
-    swing = clampD(swing + swingV, -0.4, 0.4);
-    if (mounted) setState(() {});
+    final l = list;
+    for (var i = 0; i < l.length; i++) {
+      final s = swings.putIfAbsent(l[i].id, () => Swing());
+      if (delta != 0) s.kick(-delta * 12 * (1 + 0.3 * math.sin(i * 1.7)));
+      s.step(dt);
+    }
+    frame.bump();
   }
 
   Future<void> _load() async {
@@ -79,9 +104,16 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     if (mounted) setState(() => loading = false);
   }
 
+  void _resetPage() {
+    idx = 0;
+    if (pc.hasClients) pc.jumpToPage(0);
+  }
+
   void _open(int i) {
     final l = list;
-    Navigator.of(context).push(fadeRoute(ProductScreen(products: l, index: i)));
+    if (i < 0 || i >= l.length) return;
+    swings[l[i].id]?.kick(1.6);
+    Navigator.of(context).push(zoomRoute(ProductScreen(products: l, index: i)));
   }
 
   @override
@@ -96,15 +128,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             bottom: false,
             child: Column(children: [
               _topBar(),
-              _catBar(),
+              searching ? _searchBar() : _catBar(),
               Expanded(child: _rack(l)),
               _info(sel),
-              Ticker([
-                tr('شحن مجاني فوق ${App.i.freeOver.round()} ج.م', 'FREE SHIPPING OVER ${App.i.freeOver.round()} EGP'),
-                tr('الدفع عند الاستلام', 'CASH ON DELIVERY'),
-                tr('تشكيلة جديدة', 'NEW DROP'),
-                tr('خدمة عملاء مباشرة', 'LIVE SUPPORT'),
-              ]),
+              Ticker2(),
             ]),
           ),
         );
@@ -113,8 +140,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   Widget _topBar() {
+    Widget ic(IconData i, VoidCallback f, {int badge = 0}) => IconButton(
+          visualDensity: VisualDensity.compact,
+          onPressed: f,
+          icon: Badge2(badge, Icon(i, color: C.ink, size: 24)),
+        );
     return Padding(
-      padding: const EdgeInsets.fromLTRB(18, 8, 10, 0),
+      padding: const EdgeInsetsDirectional.fromSTEB(18, 6, 6, 0),
       child: Row(children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
@@ -122,21 +154,38 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           child: const Wordmark(size: 13),
         ),
         const Spacer(),
-        IconButton(
-          onPressed: () => Navigator.of(context).push(fadeRoute(const NotificationsScreen())),
-          icon: Badge2(App.i.unread, const Icon(Icons.notifications_none_rounded, color: C.ink)),
-        ),
-        IconButton(
-          onPressed: () => Navigator.of(context).push(fadeRoute(const CartScreen())),
-          icon: Badge2(App.i.cartCount, const Icon(Icons.shopping_bag_outlined, color: C.ink)),
-        ),
-        IconButton(
-          onPressed: () => Navigator.of(context).push(fadeRoute(const AccountScreen())),
-          icon: const Icon(Icons.person_outline_rounded, color: C.ink),
-        ),
+        ic(searching ? Icons.close_rounded : Icons.search_rounded, () {
+          setState(() {
+            searching = !searching;
+            if (!searching) {
+              query = '';
+              search.clear();
+              _resetPage();
+            }
+          });
+        }),
+        ic(Icons.notifications_none_rounded, () => Navigator.of(context).push(fadeRoute(const NotificationsScreen())), badge: App.i.unread),
+        ic(Icons.shopping_bag_outlined, () => Navigator.of(context).push(fadeRoute(const CartScreen())), badge: App.i.cartCount),
+        ic(Icons.person_outline_rounded, () => Navigator.of(context).push(fadeRoute(const AccountScreen()))),
       ]),
     );
   }
+
+  Widget _searchBar() => Padding(
+        padding: const EdgeInsets.fromLTRB(22, 0, 22, 4),
+        child: SizedBox(
+          height: 40,
+          child: TextField(
+            controller: search,
+            autofocus: true,
+            onChanged: (v) => setState(() {
+              query = v;
+              _resetPage();
+            }),
+            decoration: InputDecoration(hintText: tr('دوّر على قطعة...', 'Search the rack…'), isDense: true, prefixIcon: const Icon(Icons.search_rounded, size: 20)),
+          ),
+        ),
+      );
 
   Widget _catBar() {
     return SizedBox(
@@ -150,16 +199,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               padding: const EdgeInsetsDirectional.only(end: 18),
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
-                onTap: () {
-                  setState(() {
-                    cat = c[0];
-                    idx = 0;
-                  });
-                  if (pc.hasClients) pc.jumpToPage(0);
-                },
+                onTap: () => setState(() {
+                  cat = c[0];
+                  _resetPage();
+                }),
                 child: Center(
                   child: Text(
-                    tr(c[1], c[2]).toUpperCase(),
+                    '${c[0] == 'fav' ? '♥ ' : ''}${tr(c[1], c[2]).toUpperCase()}',
                     style: TextStyle(
                       fontSize: 11,
                       letterSpacing: 1.4,
@@ -181,19 +227,24 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   Widget _rack(List<Product> l) {
     if (loading) return const Loading();
     if (error != null) return ErrorRetry(error!, _load);
-    if (l.isEmpty) return Empty(tr('مفيش قطع في القسم ده لسه', 'Nothing here yet'));
+    if (l.isEmpty) return Empty(cat == 'fav' ? tr('لسه مضفتش حاجة للمفضلة', 'Nothing saved yet') : tr('مفيش قطع هنا', 'Nothing here'));
     return LayoutBuilder(builder: (context, c) {
-      final itemW = c.maxWidth * 0.38;
-      final cur = page;
+      final itemW = c.maxWidth * 0.5 * 0.94;
       return Stack(children: [
+        // the rail
         Positioned(
-          left: 14,
-          right: 14,
-          top: 26,
-          child: Container(height: 2.2, decoration: BoxDecoration(color: C.ink.withValues(alpha: 0.7), borderRadius: BorderRadius.circular(2))),
+          left: 0,
+          right: 0,
+          top: 22,
+          child: Container(
+            height: 3,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: [C.ink.withValues(alpha: 0.0), C.ink.withValues(alpha: 0.85), C.ink.withValues(alpha: 0.85), C.ink.withValues(alpha: 0.0)], stops: const [0, 0.08, 0.92, 1]),
+            ),
+          ),
         ),
         Positioned.fill(
-          top: 20,
+          top: 18,
           child: PageView.builder(
             controller: pc,
             itemCount: l.length,
@@ -202,28 +253,42 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             itemBuilder: (_, i) {
               final p = l[i];
               final v = p.colors.isEmpty ? null : p.colors.first;
-              final d = (cur - i).abs();
-              final scale = (1.12 - d * 0.14).clamp(0.72, 1.12);
-              final sway = math.sin(tick.value * 2 * math.pi + i * 1.3) * 0.022;
               return GestureDetector(
                 behavior: HitTestBehavior.opaque,
-                onTap: () => i == idx ? _open(i) : pc.animateToPage(i, duration: const Duration(milliseconds: 320), curve: Curves.easeOut),
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: Opacity(
-                    opacity: (1 - d * 0.18).clamp(0.5, 1.0),
-                    child: Transform.scale(
-                      scale: scale,
+                onTap: () => i == idx ? _open(i) : pc.animateToPage(i, duration: const Duration(milliseconds: 380), curve: Curves.easeOutCubic),
+                child: AnimatedBuilder(
+                  animation: frame,
+                  builder: (_, __) {
+                    final d = i - page;
+                    final a = d.abs().clamp(0.0, 1.0);
+                    final sw = swings[p.id]?.a ?? 0;
+                    final wind = math.sin(time * 0.9 + i * 1.3) * 0.016;
+                    final m = Matrix4.identity()
+                      ..setEntry(3, 2, 0.0011)
+                      ..rotateY(-d.clamp(-1.0, 1.0) * 0.5);
+                    return Align(
                       alignment: Alignment.topCenter,
-                      child: GarmentView(
-                        garment: p.garment,
-                        color: v == null ? C.mute : hexColor(v.hex),
-                        accent: v?.accent == null ? null : hexColor(v!.accent!),
-                        width: itemW,
-                        swing: swing * (1 - d.clamp(0.0, 1.0) * 0.4) + sway,
+                      child: Opacity(
+                        opacity: 1 - 0.5 * a,
+                        child: Transform(
+                          transform: m,
+                          alignment: Alignment.topCenter,
+                          child: Transform.scale(
+                            scale: 1 - 0.24 * a,
+                            alignment: Alignment.topCenter,
+                            child: GarmentView(
+                              garment: p.garment,
+                              color: v == null ? C.mute : hexColor(v.hex),
+                              accent: v?.accent == null ? null : hexColor(v!.accent!),
+                              imageUrl: v?.image,
+                              width: itemW,
+                              swing: sw + wind,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 ),
               );
             },
@@ -234,32 +299,62 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   Widget _info(Product? p) {
-    if (p == null) return const SizedBox(height: 12);
+    if (p == null) return const SizedBox(height: 14);
+    final fav = App.i.isFav(p.id);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 6, 24, 16),
+      padding: const EdgeInsets.fromLTRB(24, 4, 24, 14),
       child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Text(p.name.toUpperCase(), textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 1.8)),
-        const SizedBox(height: 4),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 220),
+          child: Column(key: ValueKey(p.id), mainAxisSize: MainAxisSize.min, children: [
+            Text(p.name.toUpperCase(), textAlign: TextAlign.center, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, letterSpacing: 2)),
+            const SizedBox(height: 4),
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              Text(money(p.price), style: const TextStyle(fontSize: 12.5, color: C.mute, letterSpacing: 0.6)),
+              if (p.compareAt != null && p.compareAt! > p.price) ...[
+                const SizedBox(width: 8),
+                Text(money(p.compareAt!), style: const TextStyle(fontSize: 11, color: C.mute, decoration: TextDecoration.lineThrough)),
+              ],
+            ]),
+            const SizedBox(height: 8),
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              for (final v in p.colors.take(6))
+                Container(
+                  width: 11,
+                  height: 11,
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  decoration: BoxDecoration(color: hexColor(v.hex), shape: BoxShape.circle, border: Border.all(color: C.ink.withValues(alpha: 0.25), width: 0.6)),
+                ),
+            ]),
+          ]),
+        ),
+        const SizedBox(height: 12),
         Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Text(money(p.price), style: const TextStyle(fontSize: 12, color: C.mute, letterSpacing: 0.6)),
-          if (p.compareAt != null && p.compareAt! > p.price) ...[
-            const SizedBox(width: 8),
-            Text(money(p.compareAt!), style: const TextStyle(fontSize: 11, color: C.mute, decoration: TextDecoration.lineThrough)),
-          ],
-        ]),
-        const SizedBox(height: 8),
-        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          for (final v in p.colors.take(6))
-            Container(
-              width: 10,
-              height: 10,
-              margin: const EdgeInsets.symmetric(horizontal: 3),
-              decoration: BoxDecoration(color: hexColor(v.hex), shape: BoxShape.circle, border: Border.all(color: C.ink.withValues(alpha: 0.25), width: 0.6)),
+          NeonButton(tr('شوف القطعة', 'View piece'), onPressed: () => _open(idx), outline: true, wide: false),
+          const SizedBox(width: 10),
+          InkWell(
+            customBorder: const CircleBorder(),
+            onTap: () => App.i.toggleFav(p.id),
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: C.ink, width: 1.2), color: fav ? C.neon : Colors.transparent),
+              child: Icon(fav ? Icons.favorite_rounded : Icons.favorite_border_rounded, size: 21),
             ),
+          ),
         ]),
-        const SizedBox(height: 14),
-        NeonButton(tr('شوف القطعة', 'View piece'), onPressed: () => _open(idx), outline: true, wide: false),
       ]),
     );
   }
+}
+
+/// Bottom ticker with the live shipping threshold.
+class Ticker2 extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) => Marquee([
+        tr('شحن مجاني فوق ${App.i.freeOver.round()} ج.م', 'FREE SHIPPING OVER ${App.i.freeOver.round()} EGP'),
+        tr('الدفع عند الاستلام', 'CASH ON DELIVERY'),
+        tr('تشكيلة جديدة', 'NEW DROP'),
+        tr('خدمة عملاء مباشرة', 'LIVE SUPPORT'),
+      ]);
 }
