@@ -5,6 +5,7 @@ import '../core/common.dart';
 import '../core/models.dart';
 import '../core/theme.dart';
 import '../widgets/garment.dart';
+import '../widgets/navbar.dart';
 import 'orders.dart';
 
 class CartScreen extends StatelessWidget {
@@ -17,6 +18,7 @@ class CartScreen extends StatelessWidget {
         final a = App.i;
         return Scaffold(
           appBar: AppBar(title: Text(tr('الشنطة', 'BAG'))),
+          bottomNavigationBar: const NavBar(current: 2),
           body: a.cart.isEmpty
               ? Empty(tr('الشنطة فاضية. اختار قطعة من الشماعة.', 'Your bag is empty. Pick a piece from the rack.'), icon: Icons.shopping_bag_outlined)
               : Column(children: [

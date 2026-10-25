@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../core/api.dart';
 import '../core/app.dart';
@@ -9,6 +10,8 @@ import 'account.dart';
 import 'cart.dart';
 import 'notifications.dart';
 import 'product.dart';
+import 'staff_access.dart';
+import '../widgets/navbar.dart';
 
 const _cats = [
   ['all', 'الكل', 'All'],
@@ -33,6 +36,8 @@ class _HomeScreenState extends State<HomeScreen> {
   String cat = 'all', query = '';
   int idx = 0;
   final search = TextEditingController();
+  int logoTaps = 0;
+  Timer? logoTimer;
 
   List<Product> get list {
     var l = all;
@@ -58,6 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     search.dispose();
+    logoTimer?.cancel();
     super.dispose();
   }
 
@@ -87,6 +93,21 @@ class _HomeScreenState extends State<HomeScreen> {
     return ListenableBuilder(
       listenable: App.i,
       builder: (context, _) {
+        final pc = App.i.pendingCat;
+        if (pc != null) {
+          App.i.pendingCat = null;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              setState(() {
+                cat = pc;
+                searching = false;
+                query = '';
+                search.clear();
+                idx = 0;
+              });
+            }
+          });
+        }
         final l = list;
         final sel = l.isEmpty ? null : l[idx.clamp(0, l.length - 1)];
         return Scaffold(
@@ -100,9 +121,47 @@ class _HomeScreenState extends State<HomeScreen> {
               Ticker2(),
             ]),
           ),
+          bottomNavigationBar: NavBar(current: cat == 'fav' ? 1 : 0, onTap: _tab),
         );
       },
     );
+  }
+
+  void _logoTap() {
+    logoTimer?.cancel();
+    logoTaps++;
+    if (logoTaps >= 5) {
+      logoTaps = 0;
+      openStaffArea(context);
+      return;
+    }
+    logoTimer = Timer(const Duration(milliseconds: 1600), () => logoTaps = 0);
+  }
+
+  void _tab(int i) {
+    switch (i) {
+      case 0:
+        setState(() {
+          cat = 'all';
+          searching = false;
+          query = '';
+          search.clear();
+          idx = 0;
+        });
+        break;
+      case 1:
+        setState(() {
+          cat = 'fav';
+          idx = 0;
+        });
+        break;
+      case 2:
+        Navigator.of(context).push(fadeRoute(const CartScreen()));
+        break;
+      case 3:
+        Navigator.of(context).push(fadeRoute(const AccountScreen()));
+        break;
+    }
   }
 
   Widget _topBar() {
@@ -114,10 +173,13 @@ class _HomeScreenState extends State<HomeScreen> {
     return Padding(
       padding: const EdgeInsetsDirectional.fromSTEB(18, 6, 6, 0),
       child: Row(children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-          decoration: BoxDecoration(color: C.neon, borderRadius: BorderRadius.circular(6)),
-          child: const Wordmark(size: 13, color: C.onNeon),
+        GestureDetector(
+          onTap: _logoTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+            decoration: BoxDecoration(color: C.neon, borderRadius: BorderRadius.circular(6)),
+            child: const Wordmark(size: 13, color: C.onNeon),
+          ),
         ),
         const Spacer(),
         ic(searching ? Icons.close_rounded : Icons.search_rounded, () {
@@ -131,8 +193,6 @@ class _HomeScreenState extends State<HomeScreen> {
           });
         }),
         ic(Icons.notifications_none_rounded, () => Navigator.of(context).push(fadeRoute(const NotificationsScreen())), badge: App.i.unread),
-        ic(Icons.shopping_bag_outlined, () => Navigator.of(context).push(fadeRoute(const CartScreen())), badge: App.i.cartCount),
-        ic(Icons.person_outline_rounded, () => Navigator.of(context).push(fadeRoute(const AccountScreen()))),
       ]),
     );
   }

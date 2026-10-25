@@ -5,6 +5,7 @@ import '../core/common.dart';
 import '../core/models.dart';
 import '../core/theme.dart';
 import '../widgets/garment.dart';
+import '../widgets/navbar.dart';
 import 'chat.dart';
 
 class OrdersScreen extends StatefulWidget {
@@ -39,6 +40,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(tr('طلباتي', 'MY ORDERS'))),
+      bottomNavigationBar: const NavBar(current: 3),
       body: error != null
           ? ErrorRetry(error!, _load)
           : orders == null

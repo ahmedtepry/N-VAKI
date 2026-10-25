@@ -14,7 +14,9 @@ class Api {
   }
 
   static Future<void> signIn(String email, String password) async {
-    await db.auth.signInWithPassword(email: email.trim(), password: password);
+    var id = email.trim().toLowerCase();
+    if (id == 'admin') id = 'admin@novaki.app'; // team username -> its auth address
+    await db.auth.signInWithPassword(email: id, password: password);
     await App.i.loadProfile();
   }
 

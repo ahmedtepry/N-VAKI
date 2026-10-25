@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../core/api.dart';
 import '../core/app.dart';
@@ -5,6 +6,7 @@ import '../core/common.dart';
 import '../core/theme.dart';
 import '../widgets/garment.dart';
 import 'home.dart';
+import 'staff_access.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen();
@@ -13,6 +15,19 @@ class AuthScreen extends StatefulWidget {
 }
 
 class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateMixin {
+  int _logoTaps = 0;
+  Timer? _logoTimer;
+
+  void _logoTap() {
+    _logoTimer?.cancel();
+    if (++_logoTaps >= 5) {
+      _logoTaps = 0;
+      openStaffArea(context);
+      return;
+    }
+    _logoTimer = Timer(const Duration(milliseconds: 1600), () => _logoTaps = 0);
+  }
+
   bool register = false, busy = false, hide = true;
   final name = TextEditingController(), email = TextEditingController(), pass = TextEditingController(), phone = TextEditingController();
   final formKey = GlobalKey<FormState>();
@@ -20,6 +35,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
 
   @override
   void dispose() {
+    _logoTimer?.cancel();
     sway.dispose();
     for (final c in [name, email, pass, phone]) {
       c.dispose();
@@ -78,7 +94,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Center(child: Wordmark(size: 26)),
+                  Center(child: GestureDetector(onTap: _logoTap, child: const Wordmark(size: 26))),
                   const SizedBox(height: 8),
                   Center(
                     child: Text(

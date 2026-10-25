@@ -4,7 +4,7 @@ import '../core/app.dart';
 import '../core/common.dart';
 import '../core/models.dart';
 import '../core/theme.dart';
-import '../dash/dash.dart';
+import '../widgets/navbar.dart';
 import 'auth.dart';
 import 'chat.dart';
 import 'orders.dart';
@@ -21,6 +21,7 @@ class AccountScreen extends StatelessWidget {
         final initial = a.name.isEmpty ? '?' : a.name.characters.first.toUpperCase();
         return Scaffold(
           appBar: AppBar(title: Text(tr('حسابي', 'ACCOUNT'))),
+          bottomNavigationBar: const NavBar(current: 3),
           body: ListView(padding: const EdgeInsets.fromLTRB(22, 8, 22, 30), children: [
             Row(children: [
               Container(width: 60, height: 60, alignment: Alignment.center, decoration: const BoxDecoration(color: C.neon, shape: BoxShape.circle), child: Text(initial, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: C.onNeon))),
@@ -35,10 +36,6 @@ class AccountScreen extends StatelessWidget {
               IconButton(onPressed: () => _edit(context), icon: const Icon(Icons.edit_outlined, size: 20)),
             ]),
             const SizedBox(height: 22),
-            if (a.isStaff) ...[
-              _tile(context, Icons.dashboard_customize_outlined, tr('لوحة تحكم الفريق', 'Team dashboard'), () => Navigator.of(context).push(fadeRoute(const DashboardScreen())), highlight: true),
-              const SizedBox(height: 10),
-            ],
             _tile(context, Icons.inventory_2_outlined, tr('طلباتي', 'My orders'), () => Navigator.of(context).push(fadeRoute(const OrdersScreen()))),
             _tile(context, Icons.chat_bubble_outline_rounded, tr('خدمة العملاء', 'Support chat'), () => Navigator.of(context).push(fadeRoute(const ChatScreen()))),
             _tile(context, Icons.translate_rounded, tr('اللغة: العربية / English', 'Language: English / العربية'), () => a.setLang(a.ar ? 'en' : 'ar')),

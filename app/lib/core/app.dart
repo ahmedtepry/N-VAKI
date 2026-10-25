@@ -26,6 +26,11 @@ class App extends ChangeNotifier {
   final List<CartLine> cart = [];
   int unread = 0;
   final Set<String> favs = {};
+  String? pendingCat; // set by the bottom bar to make the home screen show a category
+  void showSaved() {
+    pendingCat = 'fav';
+    notifyListeners();
+  }
 
   StreamSubscription? _notifSub;
   String? _notifUser;

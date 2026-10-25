@@ -3,6 +3,7 @@ import '../core/api.dart';
 import '../core/app.dart';
 import '../core/common.dart';
 import '../core/theme.dart';
+import '../widgets/navbar.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen();
@@ -57,6 +58,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(tr('الإشعارات', 'NOTIFICATIONS'))),
+      bottomNavigationBar: const NavBar(),
       body: error != null
           ? ErrorRetry(error!, _load)
           : rows == null
