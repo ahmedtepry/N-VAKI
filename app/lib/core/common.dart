@@ -15,6 +15,13 @@ String friendly(Object e) {
   bool has(String s) => m.contains(s.toLowerCase());
   if (has('out_of_stock')) return tr('المخزون مش كفاية للكمية دي.', 'Not enough stock for that quantity.');
   if (has('product_unavailable')) return tr('المنتج ده مبقاش متاح.', 'This item is no longer available.');
+  if (has('coupon_invalid')) return tr('الكوبون غير صحيح.', 'Invalid coupon.');
+  if (has('coupon_expired')) return tr('الكوبون منتهي.', 'This coupon has expired.');
+  if (has('coupon_used_up')) return tr('الكوبون خلص عدد استخداماته.', 'This coupon has been fully used.');
+  if (has('coupon_min_order')) return tr('الكوبون ده لطلبات أكبر من كده.', 'This coupon needs a bigger order.');
+  if (has('store_closed')) return tr('المتجر مقفول مؤقتًا. جرّب بعدين.', 'The store is temporarily closed. Try again later.');
+  if (has('blocked')) return tr('الحساب ده موقوف. كلم الدعم.', 'This account is suspended. Contact support.');
+  if (has('in_use')) return tr('مينفعش الحذف، فيه منتجات بتستخدمه.', 'Cannot delete: products still use it.');
   if (has('cart_empty')) return tr('الشنطة فاضية.', 'Your bag is empty.');
   if (has('invalid_input')) return tr('راجع البيانات المدخلة.', 'Please check the details.');
   if (has('cannot_cancel')) return tr('الطلب اتأكد ومينفعش يتلغى من هنا. كلم الدعم.', 'This order is confirmed. Contact support to cancel.');

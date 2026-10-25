@@ -13,15 +13,11 @@ import 'product.dart';
 import 'staff_access.dart';
 import '../widgets/navbar.dart';
 
-const _cats = [
-  ['all', 'الكل', 'All'],
-  ['fav', 'المفضلة', 'Saved'],
-  ['tees', 'تيشيرتات', 'Tees'],
-  ['jerseys', 'جيرسي', 'Jerseys'],
-  ['hoodies', 'هوديز', 'Hoodies'],
-  ['jackets', 'جاكيتات', 'Jackets'],
-  ['shirts', 'قمصان', 'Shirts'],
-];
+List<List<String>> get _cats => [
+      ['all', 'الكل', 'All'],
+      ['fav', 'المفضلة', 'Saved'],
+      for (final c in App.i.categories) ['${c['slug']}', '${c['name_ar']}', '${c['name_en']}'],
+    ];
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen();
@@ -115,6 +111,13 @@ class _HomeScreenState extends State<HomeScreen> {
             bottom: false,
             child: Column(children: [
               _topBar(),
+              if (!App.i.storeOpen)
+                Container(
+                  width: double.infinity,
+                  color: C.ink,
+                  padding: const EdgeInsets.symmetric(vertical: 7),
+                  child: Text(tr('المتجر مقفول مؤقتًا — تقدر تتصفح بس', 'Store temporarily closed — browsing only'), textAlign: TextAlign.center, style: const TextStyle(color: C.onNeon, fontSize: 12, fontWeight: FontWeight.w700)),
+                ),
               searching ? _searchBar() : _catBar(),
               Expanded(child: _rack(l)),
               _info(sel),
@@ -317,10 +320,15 @@ class _HomeScreenState extends State<HomeScreen> {
 /// Bottom ticker with the live shipping threshold.
 class Ticker2 extends StatelessWidget {
   @override
-  Widget build(BuildContext context) => Marquee([
-        tr('شحن مجاني فوق ${App.i.freeOver.round()} ج.م', 'FREE SHIPPING OVER ${App.i.freeOver.round()} EGP'),
-        tr('الدفع عند الاستلام', 'CASH ON DELIVERY'),
-        tr('تشكيلة جديدة', 'NEW DROP'),
-        tr('خدمة عملاء مباشرة', 'LIVE SUPPORT'),
-      ]);
+  Widget build(BuildContext context) {
+    final custom = App.i.tickerItems;
+    return Marquee(custom.isNotEmpty
+        ? custom
+        : [
+            tr('شحن مجاني فوق ${App.i.freeOver.round()} ج.م', 'FREE SHIPPING OVER ${App.i.freeOver.round()} EGP'),
+            tr('الدفع عند الاستلام', 'CASH ON DELIVERY'),
+            tr('تشكيلة جديدة', 'NEW DROP'),
+            tr('خدمة عملاء مباشرة', 'LIVE SUPPORT'),
+          ]);
+  }
 }

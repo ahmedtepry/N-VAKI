@@ -6,6 +6,7 @@ import '../core/app.dart';
 import '../core/common.dart';
 import '../core/models.dart';
 import '../core/theme.dart';
+import '../screens/track.dart';
 import '../screens/chat.dart';
 import '../screens/notifications.dart' show fmtAgo;
 import '../widgets/garment.dart';
@@ -271,6 +272,7 @@ class _OrderManageScreenState extends State<OrderManageScreen> {
                       Text('${d['phone']}', textDirection: TextDirection.ltr, style: const TextStyle(color: C.mute, fontSize: 12)),
                     ]),
                   ),
+                  DeliveryPanel(order: d, onChanged: _load),
                   const SizedBox(height: 16),
                   for (final it in (d['order_items'] as List).map((e) => Json.from(e)))
                     Padding(

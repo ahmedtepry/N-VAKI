@@ -7,6 +7,7 @@ import '../core/theme.dart';
 import '../widgets/garment.dart';
 import 'home.dart';
 import 'staff_access.dart';
+import 'track.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen();
@@ -146,6 +147,11 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                       register ? tr('عندي حساب بالفعل', 'I already have an account') : tr('مفيش عندي حساب؟ سجّل دلوقتي', 'New here? Create an account'),
                       style: const TextStyle(color: C.ink, fontWeight: FontWeight.w700),
                     ),
+                  ),
+                  TextButton.icon(
+                    onPressed: busy ? null : () => Navigator.of(context).push(fadeRoute(const GuestTrackScreen())),
+                    icon: const Icon(Icons.local_shipping_outlined, size: 18, color: C.mute),
+                    label: Text(tr('تتبّع طلب من غير حساب', 'Track an order without an account'), style: const TextStyle(color: C.mute, fontWeight: FontWeight.w600)),
                   ),
                 ]),
               ),

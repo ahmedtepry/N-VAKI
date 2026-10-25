@@ -32,15 +32,18 @@ class Api {
     await signIn(email, password);
   }
 
-  static Future<String> placeOrder({required String name, required String phone, required String address, required String city, String? notes}) async {
+  static Future<String> placeOrder({required String name, required String phone, required String address, required String city, String? notes, String? coupon, double? lat, double? lng}) async {
     final items = App.i.cart.map((l) => {'variant_id': l.variantId, 'qty': l.qty}).toList();
-    final id = await db.rpc('place_order', params: {
+    final id = await db.rpc('place_order_v2', params: {
       'p_items': items,
       'p_name': name,
       'p_phone': phone,
       'p_address': address,
       'p_city': city,
       'p_notes': notes,
+      'p_coupon': coupon,
+      'p_lat': lat,
+      'p_lng': lng,
     });
     return id as String;
   }
@@ -104,4 +107,45 @@ class Api {
     final rows = await db.from('profiles').select('id, full_name, email, phone, role').inFilter('id', ids.toList());
     return {for (final r in rows) r['id'] as String: Json.from(r)};
   }
+
+  // ---- orders: coupon + delivery location + tracking ----
+  static Future<num> validateCoupon(String code, num subtotal) async =>
+      (await db.rpc('validate_coupon', params: {'p_code': code, 'p_subtotal': subtotal})) as num;
+
+  static Future<Json?> trackOrder(String no, String phone) async {
+    final n = int.tryParse(no.replaceAll(RegExp(r'\D'), ''));
+    if (n == null) return null;
+    final r = await db.rpc('track_order', params: {'p_no': n, 'p_phone': phone});
+    return r == null ? null : Json.from(r);
+  }
+
+  static Future<void> courierPing(String order, double lat, double lng) async =>
+      db.rpc('courier_ping', params: {'p_order': order, 'p_lat': lat, 'p_lng': lng});
+
+  static Future<void> postOrderUpdate(String order, String msg) async =>
+      db.rpc('post_order_update', params: {'p_order': order, 'p_message': msg});
+
+  // ---- catalog admin ----
+  static Future<List<Json>> categories({bool all = false}) async {
+    final q = db.from('categories').select();
+    final rows = all ? await q.order('sort') : await q.eq('active', true).order('sort');
+    return rows.map((e) => Json.from(e)).toList();
+  }
+
+  static Future<List<Json>> sizes({bool all = false}) async {
+    final q = db.from('size_options').select();
+    final rows = all ? await q.order('sort') : await q.eq('active', true).order('sort');
+    return rows.map((e) => Json.from(e)).toList();
+  }
+
+  static Future<List<Json>> coupons() async => (await db.from('coupons').select().order('created_at', ascending: false)).map((e) => Json.from(e)).toList();
+
+  static Future<void> saveSetting(String key, String value) async => db.from('app_settings').upsert({'key': key, 'value': value});
+
+  // ---- customers & team ----
+  static Future<List<Json>> customers(String? q) async =>
+      ((await db.rpc('list_customers', params: {'p_q': q})) as List).map((e) => Json.from(e)).toList();
+  static Future<void> setCustomerBlocked(String id, bool blocked) async => db.rpc('set_customer_blocked', params: {'p_user': id, 'p_blocked': blocked});
+  static Future<void> setMemberPerms(String id, List<String> perms) async => db.rpc('set_member_perms', params: {'p_user': id, 'p_perms': perms});
+  static Future<void> removeMember(String id) async => db.rpc('remove_member', params: {'p_user': id});
 }

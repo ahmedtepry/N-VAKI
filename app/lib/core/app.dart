@@ -71,9 +71,23 @@ class App extends ChangeNotifier {
     try {
       final rows = await db.from('app_settings').select();
       settings = {for (final r in rows) r['key'] as String: r['value'] as String};
+      final cats = await db.from('categories').select().eq('active', true).order('sort');
+      categories = cats.map((e) => Map<String, dynamic>.from(e)).toList();
       notifyListeners();
     } catch (_) {}
   }
+
+  List<Map<String, dynamic>> categories = [];
+  bool get storeOpen => (settings['store_open'] ?? 'true') != 'false';
+  List<String> get tickerItems {
+    final raw = settings[ar ? 'ticker_ar' : 'ticker_en'] ?? '';
+    return raw.split('|').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+  }
+
+  // ---- team permissions (enforced again on the server) ----
+  static const allPerms = ['orders_view', 'orders_manage', 'chat', 'catalog_edit', 'prices_edit', 'stock_edit', 'categories_edit', 'sizes_edit', 'coupons_edit', 'settings_edit', 'customers_view', 'customers_block', 'reports_view'];
+  List<String> get perms => role == 'owner' ? allPerms : ((profile?['perms'] as List?) ?? const []).map((e) => '$e').toList();
+  bool can(String p) => isStaff && perms.contains(p);
 
   double get shippingFee => double.tryParse(settings['shipping_fee'] ?? '') ?? 60;
   double get freeOver => double.tryParse(settings['free_shipping_over'] ?? '') ?? 1500;

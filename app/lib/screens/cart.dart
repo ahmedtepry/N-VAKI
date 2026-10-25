@@ -6,7 +6,9 @@ import '../core/models.dart';
 import '../core/theme.dart';
 import '../widgets/garment.dart';
 import '../widgets/navbar.dart';
+import 'location_picker.dart';
 import 'orders.dart';
+import 'package:latlong2/latlong.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen();
@@ -104,10 +106,51 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   late final name = TextEditingController(text: App.i.name);
   late final phone = TextEditingController(text: (App.i.profile?['phone'] as String?) ?? '');
   final city = TextEditingController(), address = TextEditingController(), notes = TextEditingController();
-  bool busy = false;
+  final coupon = TextEditingController();
+  bool busy = false, checking = false;
+  double discount = 0;
+  String? appliedCode;
+  LatLng? pin;
+
+  double get shipNow {
+    final a = App.i;
+    if (a.cart.isEmpty) return 0;
+    final sub = a.cartSubtotal - discount;
+    return (a.freeOver > 0 && sub >= a.freeOver) ? 0 : a.shippingFee;
+  }
+
+  double get totalNow => App.i.cartSubtotal - discount + shipNow;
+
+  Future<void> _applyCoupon() async {
+    final code = coupon.text.trim().toUpperCase();
+    if (code.isEmpty) return;
+    setState(() => checking = true);
+    try {
+      final d = await Api.validateCoupon(code, App.i.cartSubtotal);
+      setState(() {
+        discount = d.toDouble();
+        appliedCode = code;
+      });
+      toast(tr('اتطبّق الكوبون ✓', 'Coupon applied ✓'));
+    } catch (e) {
+      setState(() {
+        discount = 0;
+        appliedCode = null;
+      });
+      toastError(e);
+    } finally {
+      if (mounted) setState(() => checking = false);
+    }
+  }
+
+  Future<void> _pickLocation() async {
+    final r = await Navigator.of(context).push<LatLng>(MaterialPageRoute(builder: (_) => LocationPickerScreen(initial: pin)));
+    if (r != null && mounted) setState(() => pin = r);
+  }
 
   @override
   void dispose() {
+    coupon.dispose();
     for (final c in [name, phone, city, address, notes]) {
       c.dispose();
     }
@@ -118,7 +161,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     if (!key.currentState!.validate()) return;
     setState(() => busy = true);
     try {
-      final id = await Api.placeOrder(name: name.text, phone: phone.text, address: address.text, city: city.text, notes: notes.text);
+      final id = await Api.placeOrder(name: name.text, phone: phone.text, address: address.text, city: city.text, notes: notes.text, coupon: appliedCode, lat: pin?.latitude, lng: pin?.longitude);
       final row = await App.i.db.from('orders').select('order_no, total').eq('id', id).single();
       App.i.clearCart();
       if (!mounted) return;
@@ -150,6 +193,28 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             TextFormField(controller: city, decoration: InputDecoration(labelText: tr('المدينة', 'City')), validator: (v) => (v ?? '').trim().isEmpty ? tr('اكتب المدينة', 'Required') : null),
             TextFormField(controller: address, maxLines: 2, decoration: InputDecoration(labelText: tr('العنوان بالتفصيل', 'Address')), validator: (v) => (v ?? '').trim().length < 5 ? tr('اكتب العنوان', 'Required') : null),
             TextFormField(controller: notes, decoration: InputDecoration(labelText: tr('ملاحظات (اختياري)', 'Notes (optional)'))),
+            const SizedBox(height: 18),
+            InkWell(
+              onTap: _pickLocation,
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(color: pin == null ? Colors.transparent : C.tint.withValues(alpha: 0.6), border: Border.all(color: pin == null ? C.line : C.ink), borderRadius: BorderRadius.circular(12)),
+                child: Row(children: [
+                  Icon(pin == null ? Icons.add_location_alt_outlined : Icons.location_on, color: pin == null ? C.ink : C.neon),
+                  const SizedBox(width: 10),
+                  Expanded(child: Text(pin == null ? tr('حدّد موقع التوصيل على الخريطة (اختياري، بيسهّل على المندوب)', 'Pin the delivery spot on the map (optional, helps the courier)') : tr('تم تحديد الموقع ✓ — دوس للتعديل', 'Location pinned ✓ — tap to change'), style: const TextStyle(fontWeight: FontWeight.w700, height: 1.35))),
+                  const Icon(Icons.chevron_right_rounded, color: C.mute),
+                ]),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Row(children: [
+              Expanded(child: TextField(controller: coupon, textCapitalization: TextCapitalization.characters, textDirection: TextDirection.ltr, decoration: InputDecoration(labelText: tr('كوبون خصم (اختياري)', 'Coupon (optional)'), suffixIcon: appliedCode == null ? null : const Icon(Icons.check_circle, color: C.ok)))),
+              const SizedBox(width: 10),
+              OutlinedButton(onPressed: checking ? null : _applyCoupon, child: checking ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)) : Text(tr('تطبيق', 'Apply'))),
+            ]),
+            if (discount > 0) Padding(padding: const EdgeInsets.only(top: 8), child: Text(tr('الخصم: -${money(discount)}', 'Discount: -${money(discount)}'), style: const TextStyle(color: C.ok, fontWeight: FontWeight.w800))),
             const SizedBox(height: 22),
             Container(
               padding: const EdgeInsets.all(14),
@@ -158,7 +223,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 const Icon(Icons.payments_outlined),
                 const SizedBox(width: 10),
                 Expanded(child: Text(tr('الدفع عند الاستلام', 'Cash on delivery'), style: const TextStyle(fontWeight: FontWeight.w800))),
-                Text(money(a.cartSubtotal + a.cartShipping), style: const TextStyle(fontWeight: FontWeight.w900)),
+                Text(money(totalNow), style: const TextStyle(fontWeight: FontWeight.w900)),
               ]),
             ),
             const SizedBox(height: 22),

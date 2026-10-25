@@ -8,6 +8,7 @@ import '../widgets/navbar.dart';
 import 'auth.dart';
 import 'chat.dart';
 import 'orders.dart';
+import 'track.dart';
 
 class AccountScreen extends StatelessWidget {
   const AccountScreen();
@@ -37,6 +38,7 @@ class AccountScreen extends StatelessWidget {
             ]),
             const SizedBox(height: 22),
             _tile(context, Icons.inventory_2_outlined, tr('طلباتي', 'My orders'), () => Navigator.of(context).push(fadeRoute(const OrdersScreen()))),
+            _tile(context, Icons.local_shipping_outlined, tr('تتبّع طلب برقمه', 'Track an order by number'), () => Navigator.of(context).push(fadeRoute(const GuestTrackScreen()))),
             _tile(context, Icons.chat_bubble_outline_rounded, tr('خدمة العملاء', 'Support chat'), () => Navigator.of(context).push(fadeRoute(const ChatScreen()))),
             _tile(context, Icons.translate_rounded, tr('اللغة: العربية / English', 'Language: English / العربية'), () => a.setLang(a.ar ? 'en' : 'ar')),
             const SizedBox(height: 18),

@@ -7,6 +7,7 @@ import '../core/theme.dart';
 import '../widgets/garment.dart';
 import '../widgets/navbar.dart';
 import 'chat.dart';
+import 'track.dart';
 
 class OrdersScreen extends StatefulWidget {
   const OrdersScreen();
@@ -145,6 +146,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       body: ListView(padding: const EdgeInsets.fromLTRB(22, 4, 22, 28), children: [
         Row(children: [StatusChip(statusLabel(status), statusColor(status)), const Spacer(), Text(fmtDate(o['created_at']), style: const TextStyle(color: C.mute, fontSize: 11))]),
         const SizedBox(height: 18),
+        if (status != 'cancelled') ...[
+          NeonButton(status == 'shipped' ? tr('تتبّع المندوب على الخريطة', 'Track the courier live') : tr('تتبّع الطلب', 'Track order'), icon: Icons.map_outlined, onPressed: () => Navigator.of(context).push(fadeRoute(TrackScreen(orderId: o['id'])))),
+          const SizedBox(height: 16),
+        ],
         _timeline(status),
         const SizedBox(height: 18),
         for (final it in items)

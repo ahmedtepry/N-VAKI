@@ -142,6 +142,7 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
   late final price = TextEditingController(text: widget.product == null ? '' : widget.product!.price.round().toString());
   late final compare = TextEditingController(text: widget.product?.compareAt == null ? '' : widget.product!.compareAt!.round().toString());
   late String garment = widget.product?.garment ?? 'tee';
+  late String category = widget.product?.category ?? (App.i.categories.isNotEmpty ? '${App.i.categories.first['slug']}' : 'tees');
   late bool active = widget.product?.active ?? true;
   late bool featured = widget.product?.featured ?? false;
   Product? p;
@@ -181,7 +182,7 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
       'price': double.parse(price.text.trim()),
       'compare_at_price': compare.text.trim().isEmpty ? null : double.parse(compare.text.trim()),
       'garment': garment,
-      'category': garments[garment]![2],
+      'category': category,
       'active': active,
       'featured': featured,
     };
@@ -216,6 +217,10 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
   Future<void> _stock(Variant v, int delta) async {
     final n = (v.stock + delta).clamp(0, 9999);
     if (n == v.stock) return;
+    if (!App.i.can('stock_edit')) {
+      toast(tr('مفيش صلاحية لتعديل المخزون', 'No permission to edit stock'));
+      return;
+    }
     try {
       await App.i.db.from('product_variants').update({'stock': n}).eq('id', v.id);
       setState(() => v.stock = n);
@@ -283,9 +288,9 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
           TextFormField(controller: nameAr, decoration: InputDecoration(labelText: tr('الاسم بالعربي', 'Name (Arabic)')), validator: (v) => (v ?? '').trim().length < 2 ? tr('مطلوب', 'Required') : null),
           TextFormField(controller: nameEn, textDirection: TextDirection.ltr, decoration: InputDecoration(labelText: tr('الاسم بالإنجليزي', 'Name (English)')), validator: (v) => (v ?? '').trim().length < 2 ? tr('مطلوب', 'Required') : null),
           Row(children: [
-            Expanded(child: TextFormField(controller: price, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: tr('السعر', 'Price')), validator: (v) => double.tryParse((v ?? '').trim()) == null ? tr('رقم', 'Number') : null)),
+            Expanded(child: TextFormField(controller: price, enabled: App.i.can('prices_edit'), keyboardType: TextInputType.number, decoration: InputDecoration(labelText: tr('السعر', 'Price')), validator: (v) => double.tryParse((v ?? '').trim()) == null ? tr('رقم', 'Number') : null)),
             const SizedBox(width: 16),
-            Expanded(child: TextFormField(controller: compare, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: tr('السعر قبل الخصم', 'Compare-at')), validator: (v) => (v ?? '').trim().isEmpty || double.tryParse(v!.trim()) != null ? null : tr('رقم', 'Number'))),
+            Expanded(child: TextFormField(controller: compare, enabled: App.i.can('prices_edit'), keyboardType: TextInputType.number, decoration: InputDecoration(labelText: tr('السعر قبل الخصم', 'Compare-at')), validator: (v) => (v ?? '').trim().isEmpty || double.tryParse(v!.trim()) != null ? null : tr('رقم', 'Number'))),
           ]),
           TextFormField(controller: descAr, maxLines: 2, decoration: InputDecoration(labelText: tr('الوصف بالعربي', 'Description (Arabic)'))),
           TextFormField(controller: descEn, maxLines: 2, textDirection: TextDirection.ltr, decoration: InputDecoration(labelText: tr('الوصف بالإنجليزي', 'Description (English)'))),
@@ -302,6 +307,21 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
                 showCheckmark: false,
                 side: BorderSide(color: garment == e.key ? C.ink : C.line),
                 onSelected: (_) => setState(() => garment = e.key),
+              ),
+          ]),
+          const SizedBox(height: 12),
+          Text(tr('القسم', 'CATEGORY'), style: const TextStyle(fontSize: 11, color: C.mute, letterSpacing: 1.4)),
+          const SizedBox(height: 8),
+          Wrap(spacing: 8, runSpacing: 8, children: [
+            for (final c in App.i.categories)
+              ChoiceChip(
+                label: Text(tr('${c['name_ar']}', '${c['name_en']}'), style: TextStyle(fontWeight: FontWeight.w800, color: category == c['slug'] ? C.ink : C.mute)),
+                selected: category == c['slug'],
+                selectedColor: C.tint,
+                backgroundColor: C.card,
+                showCheckmark: false,
+                side: BorderSide(color: category == c['slug'] ? C.ink : C.line),
+                onSelected: (_) => setState(() => category = '${c['slug']}'),
               ),
           ]),
           SwitchListTile(contentPadding: EdgeInsets.zero, activeColor: C.ink, activeTrackColor: C.neon, title: Text(tr('ظاهر في المتجر', 'Visible in store')), value: active, onChanged: (v) => setState(() => active = v)),
@@ -377,6 +397,15 @@ class _AddColorSheetState extends State<_AddColorSheet> {
   int? sel;
   int? acc;
   final sizes = <String>{'S', 'M', 'L', 'XL'};
+  List<String> sizeChoices = const ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+
+  @override
+  void initState() {
+    super.initState();
+    Api.sizes().then((r) {
+      if (mounted && r.isNotEmpty) setState(() => sizeChoices = r.map((e) => '${e['code']}').toList());
+    }).catchError((_) {});
+  }
   final stock = TextEditingController(text: '10');
   bool busy = false;
 
@@ -445,7 +474,7 @@ class _AddColorSheetState extends State<_AddColorSheet> {
           Text(tr('المقاسات', 'Sizes'), style: const TextStyle(fontSize: 12, color: C.mute)),
           const SizedBox(height: 8),
           Wrap(spacing: 8, children: [
-            for (final s in ['XS', 'S', 'M', 'L', 'XL', 'XXL'])
+            for (final s in sizeChoices)
               FilterChip(
                 label: Text(s, style: const TextStyle(fontWeight: FontWeight.w800)),
                 selected: sizes.contains(s),
@@ -465,125 +494,3 @@ class _AddColorSheetState extends State<_AddColorSheet> {
   }
 }
 
-// ===================================================== TEAM =====================================================
-class TeamTab extends StatefulWidget {
-  const TeamTab();
-  @override
-  State<TeamTab> createState() => _TeamTabState();
-}
-
-class _TeamTabState extends State<TeamTab> {
-  List<Json>? team;
-  Object? error;
-  final email = TextEditingController();
-  String role = 'support';
-  bool busy = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  @override
-  void dispose() {
-    email.dispose();
-    super.dispose();
-  }
-
-  Future<void> _load() async {
-    try {
-      final d = await Api.dashboard();
-      if (mounted) setState(() {
-            team = (d['team'] as List).map((e) => Json.from(e)).toList();
-            error = null;
-          });
-    } catch (e) {
-      if (mounted) setState(() => error = e);
-    }
-  }
-
-  Future<void> _add() async {
-    if (email.text.trim().isEmpty) return;
-    setState(() => busy = true);
-    try {
-      await Api.setUserRole(email.text, role);
-      email.clear();
-      toast(tr('اتضاف للفريق ✓', 'Added to the team ✓'));
-      await _load();
-    } catch (e) {
-      toastError(e);
-    } finally {
-      if (mounted) setState(() => busy = false);
-    }
-  }
-
-  Future<void> _toggle(Json m, bool v) async {
-    try {
-      await Api.setMemberActive(m['id'], v);
-      await _load();
-    } catch (e) {
-      toastError(e);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (error != null) return ErrorRetry(error!, _load);
-    final t = team;
-    if (t == null) return const Loading();
-    final roles = [
-      if (App.i.role == 'owner') 'manager',
-      'support',
-      'fulfillment',
-    ];
-    return RefreshIndicator(
-      onRefresh: _load,
-      color: C.ink,
-      child: ListView(padding: const EdgeInsets.fromLTRB(18, 6, 18, 30), children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(color: C.card, borderRadius: BorderRadius.circular(16), border: Border.all(color: C.ink)),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(tr('ضيف عضو للفريق', 'ADD A TEAMMATE'), style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.3, fontSize: 12)),
-            const SizedBox(height: 4),
-            Text(tr('لازم يكون عمل حساب في التطبيق الأول، وبعدين اكتب إيميله هنا.', 'They must create an account in the app first, then enter their email here.'), style: const TextStyle(color: C.mute, fontSize: 12, height: 1.4)),
-            TextField(controller: email, keyboardType: TextInputType.emailAddress, textDirection: TextDirection.ltr, decoration: InputDecoration(labelText: tr('إيميل العضو', 'Teammate email'))),
-            const SizedBox(height: 12),
-            Wrap(spacing: 8, children: [
-              for (final r in roles)
-                ChoiceChip(
-                  label: Text(roleLabel(r), style: TextStyle(fontWeight: FontWeight.w800, color: role == r ? C.ink : C.mute)),
-                  selected: role == r,
-                  selectedColor: C.tint,
-                  backgroundColor: C.bg,
-                  showCheckmark: false,
-                  side: BorderSide(color: role == r ? C.ink : C.line),
-                  onSelected: (_) => setState(() => role = r),
-                ),
-            ]),
-            const SizedBox(height: 14),
-            NeonButton(tr('إضافة', 'Add'), onPressed: _add, loading: busy),
-          ]),
-        ),
-        const SizedBox(height: 22),
-        for (final m in t)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            child: Row(children: [
-              Container(width: 10, height: 10, decoration: BoxDecoration(color: m['online'] == true ? C.ok : C.line, shape: BoxShape.circle)),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('${m['full_name']}', style: TextStyle(fontWeight: FontWeight.w800, color: m['is_active'] == true ? C.ink : C.mute)),
-                  Text('${roleLabel(m['role'])}  ·  ${m['email'] ?? ''}', style: const TextStyle(fontSize: 11.5, color: C.mute)),
-                  Text(tr('طلبات ${m['open_orders']} · محادثات ${m['open_chats']}', 'orders ${m['open_orders']} · chats ${m['open_chats']}'), style: const TextStyle(fontSize: 11, color: C.mute)),
-                ]),
-              ),
-              if (m['role'] != 'owner') Switch(value: m['is_active'] == true, activeColor: C.ink, activeTrackColor: C.neon, onChanged: (v) => _toggle(m, v)),
-            ]),
-          ),
-      ]),
-    );
-  }
-}

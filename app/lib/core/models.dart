@@ -46,7 +46,11 @@ class Variant {
   String get color => tr(colorAr, colorEn);
 }
 
-const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
+int _sizeRank(String s) {
+  final i = sizeOrder.indexOf(s.toUpperCase());
+  return i < 0 ? 100 : i;
+}
 
 class Product {
   final String id, nameAr, nameEn, descAr, descEn, category, garment;
@@ -72,7 +76,10 @@ class Product {
   });
   factory Product.fromJson(Map<String, dynamic> j) {
     final vs = ((j['product_variants'] as List?) ?? []).map((e) => Variant.fromJson(Map<String, dynamic>.from(e))).toList();
-    vs.sort((a, b) => sizeOrder.indexOf(a.size).compareTo(sizeOrder.indexOf(b.size)));
+    vs.sort((a, b) {
+      final c = _sizeRank(a.size).compareTo(_sizeRank(b.size));
+      return c != 0 ? c : a.size.compareTo(b.size);
+    });
     return Product(
       id: j['id'],
       nameAr: j['name_ar'],

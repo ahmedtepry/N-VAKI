@@ -6,6 +6,7 @@ import '../core/common.dart';
 import '../core/models.dart';
 import '../core/theme.dart';
 import 'dash_admin.dart';
+import 'dash_manage.dart';
 import 'dash_work.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -19,16 +20,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Timer? presence;
 
   List<(String, IconData, Widget)> get tabs {
-    final r = App.i.role;
+    final a = App.i;
     final all = <(String, IconData, Widget)>[
       (tr('نظرة عامة', 'Overview'), Icons.insights_rounded, const OverviewTab()),
     ];
-    if (r == 'owner' || r == 'manager' || r == 'fulfillment' || r == 'support') all.add((tr('الطلبات', 'Orders'), Icons.inventory_2_outlined, const OrdersTab()));
-    if (r == 'owner' || r == 'manager' || r == 'support') all.add((tr('المحادثات', 'Inbox'), Icons.forum_outlined, const InboxTab()));
-    if (r == 'owner' || r == 'manager') {
-      all.add((tr('الكتالوج', 'Catalog'), Icons.checkroom_outlined, const CatalogTab()));
-      all.add((tr('الفريق', 'Team'), Icons.groups_outlined, const TeamTab()));
-    }
+    if (a.can('orders_view')) all.add((tr('الطلبات', 'Orders'), Icons.inventory_2_outlined, const OrdersTab()));
+    if (a.can('chat')) all.add((tr('المحادثات', 'Inbox'), Icons.forum_outlined, const InboxTab()));
+    if (a.can('catalog_edit') || a.can('prices_edit') || a.can('stock_edit')) all.add((tr('الكتالوج', 'Catalog'), Icons.checkroom_outlined, const CatalogTab()));
+    if (a.can('customers_view')) all.add((tr('العملاء', 'Customers'), Icons.people_outline_rounded, const CustomersTab()));
+    if (a.can('coupons_edit')) all.add((tr('كوبونات', 'Coupons'), Icons.confirmation_number_outlined, const CouponsTab()));
+    if (a.can('settings_edit') || a.can('categories_edit') || a.can('sizes_edit')) all.add((tr('الإعدادات', 'Settings'), Icons.tune_rounded, const SettingsTab()));
+    if (a.role == 'owner') all.add((tr('الفريق', 'Team'), Icons.groups_outlined, const TeamTab()));
     return all;
   }
 
@@ -65,6 +67,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         height: 66,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         destinations: [for (final e in t) NavigationDestination(icon: Icon(e.$2), label: e.$1)],
+        indicatorColor: C.tint,
       ),
     );
   }
