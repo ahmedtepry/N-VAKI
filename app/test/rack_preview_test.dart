@@ -38,8 +38,8 @@ void main() {
     await tester.pumpWidget(MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
-        backgroundColor: const Color(0xFFF6F0EA),
-        body: RepaintBoundary(key: k, child: Padding(padding: const EdgeInsets.only(top: 40), child: RackView(items: items, onFocus: (_) {}, onOpen: (_) {}))),
+        backgroundColor: const Color(0xFFEBDAD7),
+        body: RepaintBoundary(key: k, child: Container(color: const Color(0xFFEBDAD7), padding: const EdgeInsets.only(top: 40), child: RackView(items: items, onFocus: (_) {}, onOpen: (_) {}))),
       ),
     ));
     for (var i = 0; i < 20; i++) {

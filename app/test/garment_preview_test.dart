@@ -31,7 +31,7 @@ void main() {
         body: RepaintBoundary(
           key: key,
           child: Container(
-            color: const Color(0xFFF4F3EE),
+            color: const Color(0xFFEBDAD7),
             padding: const EdgeInsets.all(16),
             child: Wrap(spacing: 12, runSpacing: 12, children: [
               for (final it in items)
