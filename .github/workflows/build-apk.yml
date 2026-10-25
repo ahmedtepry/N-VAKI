@@ -1,11 +1,8 @@
-# Builds a signed release APK on every push to main (or manually: Actions -> Run workflow).
+# Builds a signed release APK ONLY when started manually (Actions -> Run workflow), so pushes never build by accident.
 # Download: Releases page (latest) or Actions -> run -> Artifacts. The build log is pushed to the `ci-logs` branch.
 name: Build APK
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths: ["app/**", ".github/workflows/build-apk.yml"]
 permissions:
   contents: write
 concurrency:
