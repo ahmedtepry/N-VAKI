@@ -11,6 +11,7 @@ import '../screens/track.dart';
 import '../screens/chat.dart';
 import '../screens/notifications.dart' show fmtAgo;
 import '../widgets/garment.dart';
+import 'team_chat.dart';
 
 // ===================================================== ORDERS =====================================================
 class OrdersTab extends StatefulWidget {
@@ -502,11 +503,29 @@ class _InboxTabState extends State<InboxTab> {
 
   @override
   Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'newchat',
+        backgroundColor: C.neon,
+        foregroundColor: C.onNeon,
+        elevation: 0,
+        shape: StadiumBorder(side: BorderSide(color: C.ink)),
+        onPressed: () => startNewChat(context),
+        icon: const Icon(Icons.add_comment_outlined),
+        label: Text(tr('محادثة جديدة', 'NEW CHAT'), style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
+      ),
+      body: _body(context),
+    );
+  }
+
+  Widget _body(BuildContext context) {
     final filters = [
       ['mine', tr('محادثاتي', 'Mine')],
       ['unassigned', tr('بدون مسؤول', 'Unassigned')],
       ['open', tr('كل المفتوحة', 'All open')],
       ['closed', tr('المقفولة', 'Closed')],
+      ['team', tr('الفريق', 'Team')],
     ];
     return Column(children: [
       SizedBox(
@@ -530,7 +549,9 @@ class _InboxTabState extends State<InboxTab> {
         ]),
       ),
       Expanded(
-        child: error != null
+        child: filter == 'team'
+            ? const TeamInbox()
+            : error != null
             ? ErrorRetry(error!, () => setState(() => error = null))
             : !loaded
                 ? const Loading()
