@@ -38,6 +38,7 @@ grep -nE "applicationId|minSdk|signingConfig" "$G"
 step "flutter pub get"; flutter pub get || exit 1
 step "launcher icons"; dart run flutter_launcher_icons || echo "WARN: icons step failed (non-fatal)"
 step "flutter analyze"; flutter analyze --no-fatal-infos --no-fatal-warnings; echo "analyze exit=$?"
+step "garment preview"; flutter test --update-goldens test/garment_preview_test.dart; echo "golden exit=$?"
 step "flutter build apk --release"
 build_apk() {
   flutter build apk --release --obfuscate --split-debug-info=build/symbols \
