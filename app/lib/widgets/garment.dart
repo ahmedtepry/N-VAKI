@@ -36,7 +36,8 @@ class GarmentPainter extends CustomPainter {
   final bool shadow;
   final bool hangerOnly;
   final bool hanger;
-  GarmentPainter({required this.garment, required this.color, this.accent, this.swing = 0, this.shadow = true, this.hangerOnly = false, this.hanger = true});
+  final bool back; // view from behind
+  GarmentPainter({required this.garment, required this.color, this.accent, this.swing = 0, this.shadow = true, this.hangerOnly = false, this.hanger = true, this.back = false});
 
   static const double W = 100, H = 118;
   static const _rect = Rect.fromLTWH(0, 0, W, H);
@@ -110,7 +111,9 @@ class GarmentPainter extends CustomPainter {
       p.cubicTo(79, 96, 75, 74, 76, 50);
       p.lineTo(85, 25);
       p.quadraticBezierTo(74, 17, 61, 13);
-      if (garment == 'shirt') {
+      if (back) {
+        p.quadraticBezierTo(50, 17.5, 39, 13);
+      } else if (garment == 'shirt') {
         p.lineTo(50, 30);
         p.lineTo(39, 13);
       } else {
@@ -131,7 +134,9 @@ class GarmentPainter extends CustomPainter {
     p.lineTo(98, 47);
     p.quadraticBezierTo(94, 34, 85, 25);
     p.quadraticBezierTo(74, 17, 61, 13);
-    if (garment == 'jersey') {
+    if (back) {
+      p.quadraticBezierTo(50, 17.5, 39, 13);
+    } else if (garment == 'jersey') {
       p.lineTo(50, 34);
       p.lineTo(39, 13);
     } else {
@@ -252,6 +257,10 @@ class GarmentPainter extends CustomPainter {
       ..close();
     _fabric(c, hood, shade(color, _dark ? 0.02 : -0.05));
     c.drawPath(hood, Paint()..style = PaintingStyle.stroke..strokeWidth = 0.7..color = Colors.black.withValues(alpha: 0.24));
+    if (back) {
+      c.drawPath(Path()..moveTo(50, 4)..cubicTo(51, 12, 50, 20, 50, 29), _ln(Colors.black.withValues(alpha: 0.2), 0.7));
+      return;
+    }
     // dark opening
     final inner = Path()
       ..moveTo(39, 14)
@@ -314,6 +323,10 @@ class GarmentPainter extends CustomPainter {
   }
 
   void _details(Canvas c) {
+    if (back) {
+      _detailsBack(c);
+      return;
+    }
     final a = accent;
     switch (garment) {
       case 'tee':
@@ -444,9 +457,78 @@ class GarmentPainter extends CustomPainter {
     }
   }
 
+  void _detailsBack(Canvas c) {
+    final a = accent;
+    final dk = isDark(color);
+    final ink = dk ? Colors.white.withValues(alpha: 0.88) : Colors.black.withValues(alpha: 0.75);
+    // neck: shallow back neckline with a rib band and a woven label
+    c.drawPath(Path()..moveTo(39, 13)..quadraticBezierTo(50, 17.5, 61, 13), _ln(garment == 'jacket' || garment == 'hoodie' ? _rib : _rib, 2.6));
+    c.drawRect(const Rect.fromLTWH(47, 17.5, 6, 3.2), Paint()..color = Colors.white.withValues(alpha: 0.78));
+    c.drawPath(Path()..moveTo(15, 25)..quadraticBezierTo(21, 38, 24, 47), _ln(Colors.black.withValues(alpha: 0.13), 0.7));
+    c.drawPath(Path()..moveTo(85, 25)..quadraticBezierTo(79, 38, 76, 47), _ln(Colors.black.withValues(alpha: 0.13), 0.7));
+    switch (garment) {
+      case 'tee':
+        _stitchLine(c, Path()..moveTo(2.8, 51)..lineTo(19.2, 58.2));
+        _stitchLine(c, Path()..moveTo(97.2, 51)..lineTo(80.8, 58.2));
+        _stitchLine(c, Path()..moveTo(23, 102)..quadraticBezierTo(50, 105.5, 77, 102));
+        if (a != null) {
+          _brand(c, 50, 36, 4.2, a);
+          _number(c, 'N', 50, 62, 30, a, Colors.transparent);
+        }
+        break;
+      case 'jersey':
+        final ac = a ?? const Color(0xFF1E9E48);
+        final left = Path()..moveTo(24, 47)..cubicTo(26, 70, 21, 92, 22, 105)..lineTo(31, 105.6)..cubicTo(30, 92, 34, 70, 31.5, 49)..close();
+        c.drawPath(left, Paint()..color = ac);
+        c.drawPath(_mirror(left), Paint()..color = ac);
+        final sb = Path()..moveTo(2, 47)..lineTo(19, 55)..lineTo(18, 59.5)..lineTo(0.2, 51.5)..close();
+        c.drawPath(sb, Paint()..color = ac);
+        c.drawPath(_mirror(sb), Paint()..color = ac);
+        c.drawPath(Path()..moveTo(39, 13)..quadraticBezierTo(50, 17.5, 61, 13), _ln(ac, 3.2));
+        _brand(c, 50, 36, 4.2, ink);
+        _number(c, '25', 50, 66, 34, ac, dk ? Colors.white.withValues(alpha: 0.9) : Colors.black.withValues(alpha: 0.55));
+        _stitchLine(c, Path()..moveTo(32, 102)..quadraticBezierTo(50, 105.3, 68, 102));
+        break;
+      case 'hoodie':
+        final hem = Path()..moveTo(22.2, 98.5)..quadraticBezierTo(50, 102, 77.8, 98.5)..lineTo(78, 106)..quadraticBezierTo(50, 110, 22, 106)..close();
+        _ribBand(c, hem);
+        final cl = Path()..moveTo(5.8, 79.5)..lineTo(19.6, 84.2)..lineTo(20, 90)..lineTo(5, 85)..close();
+        _ribBand(c, cl);
+        _ribBand(c, _mirror(cl));
+        if (a != null) _brand(c, 50, 48, 4, a);
+        c.drawPath(Path()..moveTo(50, 28)..lineTo(50, 98), _ln(Colors.black.withValues(alpha: 0.08), 0.8));
+        break;
+      case 'jacket':
+        final ac = a ?? const Color(0xFFEFE6D2);
+        final hem = Path()..moveTo(22.2, 98.5)..quadraticBezierTo(50, 102, 77.8, 98.5)..lineTo(78, 106)..quadraticBezierTo(50, 110, 22, 106)..close();
+        _ribBand(c, hem);
+        c.drawPath(Path()..moveTo(22.3, 100.2)..quadraticBezierTo(50, 103.7, 77.7, 100.2), _ln(ac, 1.1));
+        final cl = Path()..moveTo(5.8, 79.5)..lineTo(19.6, 84.2)..lineTo(20, 90)..lineTo(5, 85)..close();
+        _ribBand(c, cl);
+        _ribBand(c, _mirror(cl));
+        c.drawPath(Path()..moveTo(50, 19)..lineTo(50, 99), _ln(Colors.black.withValues(alpha: 0.16), 0.9));
+        _stitchLine(c, Path()..moveTo(51.4, 19)..lineTo(51.4, 99));
+        _brand(c, 50, 46, 4.4, ac);
+        c.drawCircle(const Offset(50, 63), 6, _ln(ac.withValues(alpha: 0.9), 1.1));
+        _number(c, 'N', 50, 63, 8, ac, Colors.transparent);
+        break;
+      case 'shirt':
+        c.drawPath(Path()..moveTo(23, 32)..quadraticBezierTo(50, 38, 77, 32), _ln(Colors.black.withValues(alpha: 0.2), 0.8)); // yoke seam
+        _stitchLine(c, Path()..moveTo(23, 33.6)..quadraticBezierTo(50, 39.6, 77, 33.6));
+        c.drawPath(Path()..moveTo(50, 37)..lineTo(50, 105), _ln(Colors.black.withValues(alpha: 0.1), 3));
+        final cf = Path()..moveTo(5.8, 79.5)..lineTo(19.6, 84.2)..lineTo(20, 90)..lineTo(5, 85)..close();
+        for (final p in [cf, _mirror(cf)]) {
+          c.drawPath(p, Paint()..color = shade(color, dk ? 0.04 : -0.04));
+          c.drawPath(p, _ln(Colors.black.withValues(alpha: 0.24), 0.7));
+        }
+        _stitchLine(c, Path()..moveTo(23, 103)..quadraticBezierTo(50, 107, 77, 103));
+        break;
+    }
+  }
+
   @override
   bool shouldRepaint(covariant GarmentPainter o) =>
-      o.garment != garment || o.color != color || o.accent != accent || o.swing != swing || o.shadow != shadow || o.hangerOnly != hangerOnly || o.hanger != hanger;
+      o.garment != garment || o.color != color || o.accent != accent || o.swing != swing || o.shadow != shadow || o.hangerOnly != hangerOnly || o.hanger != hanger || o.back != back;
 }
 
 /// Painted garments are rasterised once (per garment/colour/size) and then only rotated, which keeps swiping smooth.
@@ -485,8 +567,8 @@ class GarmentView extends StatefulWidget {
   final String? imageUrl;
   final double swing;
   final double width;
-  final bool shadow, hanger;
-  const GarmentView({required this.garment, required this.color, this.accent, this.imageUrl, this.swing = 0, required this.width, this.shadow = true, this.hanger = true});
+  final bool shadow, hanger, back;
+  const GarmentView({required this.garment, required this.color, this.accent, this.imageUrl, this.swing = 0, required this.width, this.shadow = true, this.hanger = true, this.back = false});
   @override
   State<GarmentView> createState() => _GarmentViewState();
 }
@@ -495,9 +577,9 @@ class _GarmentViewState extends State<GarmentView> {
   String? _asked;
 
   String _key(double dpr) =>
-      '${widget.garment}|${widget.color.hashCode}|${widget.accent?.hashCode}|${(widget.width * dpr).round()}|${widget.shadow}|${widget.hanger}';
+      '${widget.garment}|${widget.color.hashCode}|${widget.accent?.hashCode}|${(widget.width * dpr).round()}|${widget.shadow}|${widget.hanger}|${widget.back}';
 
-  GarmentPainter _painter() => GarmentPainter(garment: widget.garment, color: widget.color, accent: widget.accent, shadow: widget.shadow, hanger: widget.hanger);
+  GarmentPainter _painter() => GarmentPainter(garment: widget.garment, color: widget.color, accent: widget.accent, shadow: widget.shadow, hanger: widget.hanger, back: widget.back);
 
   @override
   Widget build(BuildContext context) {
@@ -537,7 +619,7 @@ class _GarmentViewState extends State<GarmentView> {
     final img = _RasterCache.get(k);
     Widget body;
     if (img != null) {
-      body = RawImage(image: img, scale: dpr, width: w, height: h, fit: BoxFit.fill);
+      body = RawImage(image: img, scale: dpr, width: w, height: h, fit: BoxFit.fill, filterQuality: FilterQuality.high);
     } else {
       body = CustomPaint(size: Size(w, h), painter: _painter());
       if (_asked != k) {

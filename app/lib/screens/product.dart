@@ -8,6 +8,7 @@ import '../core/specs.dart';
 import '../core/theme.dart';
 import '../widgets/garment.dart';
 import 'cart.dart';
+import 'viewer.dart';
 
 class ProductScreen extends StatefulWidget {
   final List<Product> products;
@@ -136,7 +137,10 @@ class _ProductScreenState extends State<ProductScreen> with SingleTickerProvider
                     final v = x.colors.firstWhere((e) => e.hex == hx, orElse: () => x.colors.first);
                     return GestureDetector(
                       behavior: HitTestBehavior.opaque,
-                      onTap: () => sw.kick(1.3), // tap the garment to make it swing
+                      onTap: () {
+                        sw.kick(1.3);
+                        Navigator.of(context).push(cinemaRoute(ViewerScreen(product: x, variant: v)));
+                      },
                       child: Align(
                         alignment: Alignment.topCenter,
                         child: RepaintBoundary(

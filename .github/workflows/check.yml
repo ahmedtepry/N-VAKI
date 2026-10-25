@@ -1,0 +1,33 @@
+# Quick compile/analyze + artwork preview on the `wip` branch. Never builds or publishes an APK.
+name: Check (no APK)
+on:
+  push:
+    branches: [wip]
+permissions:
+  contents: write
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable, cache: true }
+      - name: Analyze + previews
+        shell: bash
+        run: bash app/tool/ci_check.sh 2>&1 | tee check.log
+      - name: Publish check log to ci-check branch
+        if: always()
+        run: |
+          mkdir -p /tmp/logs && (cp check.log /tmp/logs/check.log 2>/dev/null || echo "no log" > /tmp/logs/check.log)
+          cp app/test/goldens/*.png /tmp/logs/ 2>/dev/null || true
+          echo "run=${{ github.run_number }} sha=${{ github.sha }} result=${{ job.status }}" > /tmp/logs/meta.txt
+          git config user.name "ci-bot"; git config user.email "ci-bot@users.noreply.github.com"
+          git checkout --orphan ci-check
+          git rm -rf --cached . -q
+          rm -rf logs && cp -r /tmp/logs logs
+          git add -f logs && git commit -qm "check log #${{ github.run_number }}"
+          git push -f origin ci-check

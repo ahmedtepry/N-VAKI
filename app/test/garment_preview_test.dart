@@ -5,7 +5,8 @@ import 'package:novaki/widgets/garment.dart';
 
 // Renders every garment type in a few colours to test/goldens/garments.png so the artwork can be reviewed.
 void main() {
-  testWidgets('garment preview', (tester) async {
+  for (final back in [false, true]) {
+  testWidgets('garment preview back=$back', (tester) async {
     tester.view.physicalSize = const Size(1400, 1180);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
@@ -45,6 +46,7 @@ void main() {
                       accent: it[2].isEmpty ? null : hexColor(it[2]),
                       width: 280,
                       swing: double.parse(it[3]),
+                      back: back,
                     ),
                   ),
                 ),
@@ -54,6 +56,7 @@ void main() {
       ),
     ));
     await tester.pump();
-    await expectLater(find.byKey(key), matchesGoldenFile('goldens/garments.png'));
+    await expectLater(find.byKey(key), matchesGoldenFile(back ? 'goldens/garments_back.png' : 'goldens/garments.png'));
   });
+  }
 }
